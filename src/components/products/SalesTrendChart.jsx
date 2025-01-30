@@ -27,7 +27,7 @@ const SalesTrendChart = () => {
 						<YAxis stroke='#9CA3AF' />
 						<Tooltip
 							contentStyle={{
-								backgroundColor: "rgba(31, 41, 55, 0.8)",
+								backgroundColor: "rgba(31, 41, 55, 1)", // Make it fully opaque
 								borderColor: "#4B5563",
 							}}
 							itemStyle={{ color: "#E5E7EB" }}
