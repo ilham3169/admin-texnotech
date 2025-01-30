@@ -12,6 +12,12 @@ const ProductsPage = () => {
 	return (
 		<div className='flex-1 overflow-auto relative z-10'>
 			<Header title='Products' />
+			
+			{/* CHARTS */}
+			<div className='grid grid-col-1 lg:grid-cols-2 gap-8'>
+				<SalesTrendChart />
+				<CategoryDistributionChart />
+			</div>
 
 			<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
 				{/* STATS */}
@@ -29,11 +35,6 @@ const ProductsPage = () => {
 
 				<ProductsTable />
 
-				{/* CHARTS */}
-				<div className='grid grid-col-1 lg:grid-cols-2 gap-8'>
-					<SalesTrendChart />
-					<CategoryDistributionChart />
-				</div>
 			</main>
 		</div>
 	);

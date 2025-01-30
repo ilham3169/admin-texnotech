@@ -67,16 +67,8 @@ const ProductsTable = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      <div className='flex justify-between items-center mb-6'>
+      <div className='flex items-center mb-6' style={{gap: "2%"}}>
         <h2 className='text-xl font-semibold text-gray-100'>Product List</h2>
-
-        <button 
-          onClick={() => setIsModalOpen(true)} 
-          className='bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2'
-        >
-          <Plus size={18} />
-          Add Product
-        </button>
 
         <div className='relative'>
           <input
@@ -88,6 +80,16 @@ const ProductsTable = () => {
           />
           <Search className='absolute left-3 top-2.5 text-gray-400' size={18} />
         </div>
+
+        <button 
+          onClick={() => setIsModalOpen(true)} 
+          className='bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2'
+        >
+          <Plus size={18} />
+          Add Product
+        </button>
+
+       
       </div>
 
       <div className='overflow-x-auto'>
