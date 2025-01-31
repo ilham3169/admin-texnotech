@@ -30,7 +30,6 @@ const ProductsTable = () => {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 
-  // State for form inputs
   const [productName, setProductName] = useState('');
   const [productCategoryId, setProductCategoryId] = useState('');
   const [productBrandId, setProductBrandId] = useState('');
@@ -44,10 +43,9 @@ const ProductsTable = () => {
   const [productSpecifications, setProductSpecifications] = useState([]);
   const [isNextModalIsOpen, setIsNextModalIsOpen] = useState(false);
 
-  const [specificationValue, setSpecificationValue] = useState("");
-  
+  const [specificationValues, setSpecificationValues] = useState({});
+  const [debounceTimers, setDebounceTimers] = useState({});
 
-  // Fetch categories and brands on component mount
   useEffect(() => {
     axios
       .get('https://back-texnotech.onrender.com/categories')
@@ -68,7 +66,6 @@ const ProductsTable = () => {
       });
   }, []);
 
-  // Handle search functionality
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -80,29 +77,44 @@ const ProductsTable = () => {
     setFilteredProducts(filtered);
   };
 
-  // Retrieve category specifications
   const handleCategorySpecifications = async () => {
-
-    axios .get('https://back-texnotech.onrender.com/categories/values/' + productCategoryId)
-    .then((response) => {
-      setProductSpecifications(response.data);
-      console.log(response.data);
-    })
-    .catch((error) => {
-      console.error('Error fetching brands:', error);
-    });
+    axios
+      .get('https://back-texnotech.onrender.com/categories/values/' + productCategoryId)
+      .then((response) => {
+        setProductSpecifications(response.data);
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching brands:', error);
+      });
   };
 
-  // Handle filled up product specifications
   const handleAddProductSpecifications = async (e) => {
-    
-  }
+    e.preventDefault();
+    console.log('Specification Values:', specificationValues);
+    setIsNextModalIsOpen(false);
+  };
 
-  const handleProductSpecificationInput = async (value, name) => {
+  const handleProductSpecificationInput = (value, id) => {
+    if (debounceTimers[id]) {
+      clearTimeout(debounceTimers[id]);
+    }
 
-  }
+    const timer = setTimeout(() => {
+      setSpecificationValues((prevValues) => ({
+        ...prevValues,
+        [id]: value,
+      }));
+      console.log(value,id)
+    }, 500);
 
-  // Handle adding a new product
+    setDebounceTimers((prevTimers) => ({
+      ...prevTimers,
+      [id]: timer,
+    }));
+
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
 
@@ -110,7 +122,7 @@ const ProductsTable = () => {
       name: productName,
       category_id: parseInt(productCategoryId),
       num_product: parseInt(productStock),
-      image_link: 'createdfrompanel', // Static for now
+      image_link: 'createdfrompanel',
       brend_id: parseInt(productBrandId),
       model_name: productModel,
       discount: parseInt(productDiscount),
@@ -118,31 +130,24 @@ const ProductsTable = () => {
       author_id: 1, // Static for now
       is_super: isSuperOffer,
       is_new: true,
-      price: parseInt(productPrice)
+      price: parseInt(productPrice),
     };
 
     console.log('Product Payload to send:', productPayload);
 
     try {
-      // const response = await axios.post(
-      //   'https://back-texnotech.onrender.com/products/add',
-      //   productPayload
-      // );
-      // console.log('Product added successfully:', response.data);
-      setIsModalOpen(false); // Close the modal on success
-      handleCategorySpecifications()
+      setIsModalOpen(false);
+      handleCategorySpecifications();
       setIsNextModalIsOpen(true);
     } catch (error) {
       console.error('Error adding product:', error);
     }
   };
 
-  // Handle category selection
   const handleCategoryChange = (e) => {
     setProductCategoryId(e.target.value);
   };
 
-  // Handle brand selection
   const handleBrandChange = (e) => {
     setProductBrandId(e.target.value);
   };
@@ -427,21 +432,21 @@ const ProductsTable = () => {
             </h2>
             <form onSubmit={handleAddProductSpecifications}>
               <div className="grid grid-cols-2 gap-4">
-
-              {productSpecifications.map((specification, index) => (
-                <div className="mb-4" key={index}>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    {specification.name}
-                  </label>
-                  <input
-                    type="text"
-                    className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                    required
-                    value={specificationValue}
-                    onChange={(e) => handleProductSpecificationInput(e.target.value, specification.name)}
-                  />
-                </div>
-              ))}
+                {productSpecifications.map((specification, index) => (
+                  <div className="mb-4" key={index}>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      {specification.name}
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                      onChange={(e) =>
+                        handleProductSpecificationInput(e.target.value, specification.id)
+                      }
+                      required
+                    />
+                  </div>
+                ))}
 
                 <div className="flex justify-end gap-4">
                   <button
