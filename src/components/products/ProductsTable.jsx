@@ -41,6 +41,12 @@ const ProductsTable = () => {
   const [productKeywords, setProductKeywords] = useState('');
   const [isSuperOffer, setIsSuperOffer] = useState(false);
 
+  const [productSpecifications, setProductSpecifications] = useState([]);
+  const [isNextModalIsOpen, setIsNextModalIsOpen] = useState(false);
+
+  const [specificationValue, setSpecificationValue] = useState("");
+  
+
   // Fetch categories and brands on component mount
   useEffect(() => {
     axios
@@ -74,6 +80,28 @@ const ProductsTable = () => {
     setFilteredProducts(filtered);
   };
 
+  // Retrieve category specifications
+  const handleCategorySpecifications = async () => {
+
+    axios .get('https://back-texnotech.onrender.com/categories/values/' + productCategoryId)
+    .then((response) => {
+      setProductSpecifications(response.data);
+      console.log(response.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching brands:', error);
+    });
+  };
+
+  // Handle filled up product specifications
+  const handleAddProductSpecifications = async (e) => {
+    
+  }
+
+  const handleProductSpecificationInput = async (value, name) => {
+
+  }
+
   // Handle adding a new product
   const handleAddProduct = async (e) => {
     e.preventDefault();
@@ -96,12 +124,14 @@ const ProductsTable = () => {
     console.log('Product Payload to send:', productPayload);
 
     try {
-      const response = await axios.post(
-        'https://back-texnotech.onrender.com/products/add',
-        productPayload
-      );
-      console.log('Product added successfully:', response.data);
+      // const response = await axios.post(
+      //   'https://back-texnotech.onrender.com/products/add',
+      //   productPayload
+      // );
+      // console.log('Product added successfully:', response.data);
       setIsModalOpen(false); // Close the modal on success
+      handleCategorySpecifications()
+      setIsNextModalIsOpen(true);
     } catch (error) {
       console.error('Error adding product:', error);
     }
@@ -370,7 +400,62 @@ const ProductsTable = () => {
                     type="submit"
                     className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                   >
-                    Save Product
+                    Next
+                  </button>
+                </div>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {isNextModalIsOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.8 }}
+          >
+            <h2 className="text-xl font-semibold text-gray-100 mb-4">
+              Fill up specifications
+            </h2>
+            <form onSubmit={handleAddProductSpecifications}>
+              <div className="grid grid-cols-2 gap-4">
+
+              {productSpecifications.map((specification, index) => (
+                <div className="mb-4" key={index}>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    {specification.name}
+                  </label>
+                  <input
+                    type="text"
+                    className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                    required
+                    value={specificationValue}
+                    onChange={(e) => handleProductSpecificationInput(e.target.value, specification.name)}
+                  />
+                </div>
+              ))}
+
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                    onClick={() => setIsNextModalIsOpen(false)}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                  >
+                    Finish
                   </button>
                 </div>
               </div>
