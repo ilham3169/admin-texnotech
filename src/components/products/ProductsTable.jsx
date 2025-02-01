@@ -1,32 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 
-// Mock product data (replace with your actual data or fetch from backend)
-const PRODUCT_DATA = [
-  {
-    id: 1,
-    name: 'Product 1',
-    category: 'Category 1',
-    price: 100,
-    stock: 10,
-    sales: 5,
-  },
-  {
-    id: 2,
-    name: 'Product 2',
-    category: 'Category 2',
-    price: 200,
-    stock: 20,
-    sales: 15,
-  },
-];
-
 
 const ProductsTable = () => {
+  const modalRef = useRef(null);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState(PRODUCT_DATA);
+  const [filteredProducts, setFilteredProducts] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -69,12 +51,25 @@ const ProductsTable = () => {
       .catch((error) => {
         console.error('Error fetching brands:', error);
       });
+
+    fetch('https://back-texnotech.onrender.com/products')
+      .then((response) => response.json())
+      .then((data) => {
+
+        setFilteredProducts(data);
+      })
+      .catch((error) => {
+        console.error('Error fetching categories:', error);
+    });  
+
   }, []);
+
+  
 
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
-    const filtered = PRODUCT_DATA.filter(
+    const filtered = filteredProducts.filter(
       (product) =>
         product.name.toLowerCase().includes(term) ||
         product.category.toLowerCase().includes(term)
@@ -121,9 +116,7 @@ const ProductsTable = () => {
           console.error('Error adding product:', error);
         }
       }
-    });
-
-   
+    });   
     setIsNextModalIsOpen(false);
   };
 
@@ -244,7 +237,8 @@ const ProductsTable = () => {
           </thead>
 
           <tbody className="divide-y divide-gray-700">
-            {filteredProducts.map((product) => (
+            {filteredProducts ? 
+            filteredProducts.map((product) => (
               <motion.tr
                 key={product.id}
                 initial={{ opacity: 0 }}
@@ -253,7 +247,7 @@ const ProductsTable = () => {
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center">
                   <img
-                    src="https://images.unsplash.com/photo-1627989580309-bfaf3e58af6f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8d2lyZWxlc3MlMjBlYXJidWRzfGVufDB8fDB8fHww"
+                    src={product.image_link}
                     alt="Product img"
                     className="size-10 rounded-full"
                   />
@@ -261,14 +255,14 @@ const ProductsTable = () => {
                 </td>
 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {product.category}
+                  {product.category_id}
                 </td>
 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   ${product.price.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {product.stock}
+                  {product.num_product}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   {product.sales}
@@ -282,7 +276,7 @@ const ProductsTable = () => {
                   </button>
                 </td>
               </motion.tr>
-            ))}
+            )) : <></>}
           </tbody>
         </table>
       </div>
@@ -293,12 +287,14 @@ const ProductsTable = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={() => setIsModalOpen(false)}
         >
           <motion.div
             className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.8 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold text-gray-100 mb-4">
               Add New Product
@@ -456,50 +452,54 @@ const ProductsTable = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={() => setIsNextModalIsOpen(false)}
         >
           <motion.div
             className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.8 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold text-gray-100 mb-4">
-              Fill up specifications
-            </h2>
-            <form onSubmit={handleAddProductSpecifications}>
-              <div className="grid grid-cols-2 gap-4">
-                {productSpecifications.map((specification, index) => (
-                  <div className="mb-4" key={index}>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {specification.name}
-                    </label>
-                    <input
-                      type="text"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      onChange={(e) =>
-                        handleProductSpecificationInput(e.target.value, specification.id)
-                      }
-                    />
-                  </div>
-                ))}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">
+                Fill up specifications
+              </h2>
+              <form onSubmit={handleAddProductSpecifications}>
+                <div className="grid grid-cols-2 gap-4">
+                  {productSpecifications.map((specification, index) => (
+                    <div className="mb-4" key={index}>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        {specification.name}
+                      </label>
+                      <input
+                        type="text"
+                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                        onChange={(e) =>
+                          handleProductSpecificationInput(e.target.value, specification.id)
+                        }
+                      />
+                    </div>
+                  ))}
 
-                <div className="flex justify-end gap-4">
-                  <button
-                    type="button"
-                    className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
-                    onClick={() => setIsNextModalIsOpen(false)}
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
-                  >
-                    Finish
-                  </button>
+                  <div className="flex justify-end gap-4">
+                    <button
+                      type="button"
+                      className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                      onClick={() => setIsNextModalIsOpen(false)}
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                    >
+                      Finish
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </motion.div>
         </motion.div>
       )}
