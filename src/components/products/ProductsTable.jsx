@@ -23,6 +23,7 @@ const PRODUCT_DATA = [
   },
 ];
 
+
 const ProductsTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState(PRODUCT_DATA);
@@ -45,6 +46,10 @@ const ProductsTable = () => {
 
   const [specificationValues, setSpecificationValues] = useState({});
   const [debounceTimers, setDebounceTimers] = useState({});
+
+  const [productSpecificationsDict, setProductSpecificationsDict] = useState({});
+
+  const [addedProductId, setAddedProductId] = useState(null)
 
   useEffect(() => {
     axios
@@ -82,16 +87,43 @@ const ProductsTable = () => {
       .get('https://back-texnotech.onrender.com/categories/values/' + productCategoryId)
       .then((response) => {
         setProductSpecifications(response.data);
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching brands:', error);
-      });
-  };
+        let newDict = {};
+        response.data.forEach(item => {
+          newDict[item.id] = "";
+        });
+        setProductSpecificationsDict(newDict);
+        })
+        .catch((error) => {
+          console.error('Error fetching brands:', error);
+        });
+    };
 
   const handleAddProductSpecifications = async (e) => {
     e.preventDefault();
-    console.log('Specification Values:', specificationValues);
+
+    const entries = Object.entries(productSpecificationsDict);
+
+    entries.forEach(async item  => {
+      if (item[1].length > 0) {
+        const productPayload = {
+          product_id: addedProductId,
+          specification_id: item[0],
+          value: item[1],
+        };
+  
+        try {
+          const response = await axios.post(
+            'https://back-texnotech.onrender.com/p_specification',
+            productPayload
+          );
+    
+        } catch (error) {
+          console.error('Error adding product:', error);
+        }
+      }
+    });
+
+   
     setIsNextModalIsOpen(false);
   };
 
@@ -105,7 +137,7 @@ const ProductsTable = () => {
         ...prevValues,
         [id]: value,
       }));
-      console.log(value,id)
+      productSpecificationsDict[id] = value;
     }, 500);
 
     setDebounceTimers((prevTimers) => ({
@@ -133,9 +165,13 @@ const ProductsTable = () => {
       price: parseInt(productPrice),
     };
 
-    console.log('Product Payload to send:', productPayload);
-
     try {
+      const response = await axios.post(
+        'https://back-texnotech.onrender.com/products/add',
+        productPayload
+      );
+      setAddedProductId(response.data.id)
+
       setIsModalOpen(false);
       handleCategorySpecifications();
       setIsNextModalIsOpen(true);
@@ -443,7 +479,6 @@ const ProductsTable = () => {
                       onChange={(e) =>
                         handleProductSpecificationInput(e.target.value, specification.id)
                       }
-                      required
                     />
                   </div>
                 ))}
