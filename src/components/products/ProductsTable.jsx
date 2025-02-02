@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Search, Plus, Edit, Trash2, AlertTriangle, DollarSign, Package, TrendingUp } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, AlertTriangle, DollarSign, Package, TrendingUp, RefreshCcw } from 'lucide-react';
 import StatCard from "../common/StatCard";
 
 
@@ -200,7 +200,6 @@ const ProductsTable = () => {
     fetch('https://back-texnotech.onrender.com/products')
     .then((response) => response.json())
     .then((data) => {
-
       setFilteredProducts(data);
     })
     .catch((error) => {
@@ -495,6 +494,13 @@ const ProductsTable = () => {
           >
             <Plus size={18} />
             Add Product
+          </button>
+
+          <button
+            onClick={handleProductsFetch}
+            className=" hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
+          >
+            <RefreshCcw size={20} />
           </button>
         </div>
 
