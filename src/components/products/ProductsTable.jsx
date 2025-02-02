@@ -45,6 +45,123 @@ const ProductsTable = () => {
 
   const [addedProductId, setAddedProductId] = useState(null)
 
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadStatus, setUploadStatus] = useState({});
+  const [isUploadComplete, setIsUploadComplete] = useState(false); 
+
+
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  const clearInputFields = () => {
+    setProductName('');
+    setProductCategoryId('');
+    setProductBrandId('');
+    setProductModel('');
+    setProductPrice('');
+    setProductDiscount('');
+    setProductStock('');
+    setProductKeywords('');
+    setProductImageLink('');
+    setIsSuperOffer(false);
+    setProductSpecificationsDict({});
+    setUploadedFiles([]);
+    setUploadStatus({});
+    setIsUploadComplete(false);
+  };
+
+  const handleAddProductClick = () => {
+    clearInputFields();
+    setIsModalOpen(true);
+  };
+
+
+
+
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (files.length > 0) {
+      const filesArray = Array.from(files);
+      setUploadedFiles((prevFiles) => [...prevFiles, ...filesArray]);
+    }
+  };
+
+
+  const uploadFiles = async () => {
+    if (uploadedFiles.length === 0) {
+      alert("No files to upload.");
+      return;
+    }
+
+    setUploadStatus({});
+    setIsUploadComplete(false); 
+
+
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const file = uploadedFiles[i];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("http://https://back-texnotech.onrender.com/files", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name}`);
+        }
+
+        const result = await response.json();
+        console.log(`Upload successful for ${file.name}:`, result);
+
+
+        // -- //
+
+        const imagePayload = {
+          image_link: result, 
+          product_id: addedProductId, 
+        };
+
+        console.log(imagePayload)
+
+        const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(imagePayload),
+        });
+
+        if (!dbResponse.ok) {
+          throw new Error(`Failed to add image to database for ${file.name}`);
+        }
+
+        const dbResult = await dbResponse.json();
+        console.log(`Image added to database for ${file.name}:`, dbResult);
+
+        setUploadStatus((prevStatus) => ({
+          ...prevStatus,
+          [file.name]: { success: true, message: "Upload and database update successful" },
+        }));
+        
+
+      } catch (error) {
+        console.error(`Upload failed for ${file.name}:`, error);
+
+        setUploadStatus((prevStatus) => ({
+          ...prevStatus,
+          [file.name]: { success: false, message: error.message },
+        }));
+      }
+    }
+
+    setIsUploadComplete(true); 
+
+  };
+
+
+
   useEffect(() => {
     axios
       .get('https://back-texnotech.onrender.com/categories')
@@ -112,6 +229,8 @@ const ProductsTable = () => {
     e.preventDefault();
 
     const entries = Object.entries(productSpecificationsDict);
+    let hasError = false;
+
 
     entries.forEach(async item  => {
       if (item[1].length > 0) {
@@ -129,10 +248,16 @@ const ProductsTable = () => {
     
         } catch (error) {
           console.error('Error adding product:', error);
+          hasError = true;
         }
       }
     });   
-    setIsNextModalIsOpen(false);
+    
+    if (!hasError) {
+      setIsNextModalIsOpen(false);
+      setIsSuccessModalOpen(true);
+    }
+
   };
 
   const handleProductSpecificationInput = (value, id) => {
@@ -147,6 +272,7 @@ const ProductsTable = () => {
       }));
       productSpecificationsDict[id] = value;
     }, 500);
+
 
     setDebounceTimers((prevTimers) => ({
       ...prevTimers,
@@ -165,7 +291,12 @@ const ProductsTable = () => {
     
     try {
       const response = await axios.delete(
-        'https://back-texnotech.onrender.com/products/' + deleteProductId,
+        `http://127.0.0.1:8000/products/${deleteProductId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json', 
+          },
+        }
       );
       console.log(deleteProductId)
       setIsDeleteProductModalOpen(false)
@@ -228,7 +359,7 @@ const ProductsTable = () => {
       name: productName,
       category_id: parseInt(productCategoryId),
       num_product: parseInt(productStock),
-      image_link: 'createdfrompanel',
+      image_link: "createdfrompanel",
       brend_id: parseInt(productBrandId),
       model_name: productModel,
       discount: parseInt(productDiscount),
@@ -276,6 +407,7 @@ const ProductsTable = () => {
     })
   }
 
+
   return (
     
     <>
@@ -311,7 +443,7 @@ const ProductsTable = () => {
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleAddProductClick()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
             <Plus size={18} />
@@ -594,6 +726,50 @@ const ProductsTable = () => {
                       </div>
                     ))}
 
+                    <div className="mb-4 col-span-2">
+
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Upload Product Images
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                        onChange={handleFileChange}
+                      />
+
+                      <div className="mt-4 space-y-2">
+                        {uploadedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <img
+                              src={URL.createObjectURL(file)} 
+                              alt={`Preview ${index}`}
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />
+                            <div>
+                              <span className="text-sm text-gray-300">{file.name}</span>
+                              {uploadStatus[file.name] && (
+                                <p
+                                  className={`text-sm ${
+                                    uploadStatus[file.name].success
+                                      ? "text-green-500"
+                                      : "text-red-500"
+                                  }`}
+                                >
+                                  {uploadStatus[file.name].message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                            
+
+                      
+                    </div>
+
                     <div className="flex justify-end gap-4">
                       <button
                         type="button"
@@ -605,12 +781,21 @@ const ProductsTable = () => {
                       <button
                         type="submit"
                         className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                        onClick={uploadFiles}
                       >
                         Finish
                       </button>
                     </div>
                   </div>
                 </form>
+
+                {isUploadComplete && (
+                  <div className="mt-4 text-green-500 text-sm">
+                    All photos have been uploaded successfully!
+                  </div>
+                )}
+
+
               </div>
             </motion.div>
           </motion.div>
@@ -656,6 +841,40 @@ const ProductsTable = () => {
                     </div>
                   </div>
                 </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+
+        {isSuccessModalOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSuccessModalOpen(false)}
+          >
+            <motion.div
+              className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">
+                Product Has Been Added
+              </h2>
+              <p className="text-gray-300 mb-4">
+                The product and its specifications have been successfully added.
+              </p>
+              <div className="flex justify-end">
+                <button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                  onClick={() => setIsSuccessModalOpen(false)}
+                >
+                  Close
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -805,6 +1024,7 @@ const ProductsTable = () => {
                     <span className="ml-2 text-sm text-gray-300">Super Offer</span>
                   </div>
 
+
                   <div className="flex justify-end gap-4">
                     <button
                       type="button"
@@ -817,7 +1037,7 @@ const ProductsTable = () => {
                       type="submit"
                       className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                     >
-                      Update
+                      Updatexgi
                     </button>
                   </div>
                 </div>
