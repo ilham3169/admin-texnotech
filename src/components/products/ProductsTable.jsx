@@ -103,7 +103,7 @@ const ProductsTable = () => {
       formData.append("file", file);
 
       try {
-        const response = await fetch("http://https://back-texnotech.onrender.com/files", {
+        const response = await fetch("https://back-texnotech.onrender.com/files", {
           method: "POST",
           body: formData,
         });
