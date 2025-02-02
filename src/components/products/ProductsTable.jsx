@@ -53,6 +53,16 @@ const ProductsTable = () => {
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
+
+  const [uploadedFile, setUploadedFile] = useState(null);
+
+  const handleFileChangex = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedFile(file);
+    }
+  };
+
   const clearInputFields = () => {
     setProductName('');
     setProductCategoryId('');
@@ -291,7 +301,7 @@ const ProductsTable = () => {
     
     try {
       const response = await axios.delete(
-        `http://127.0.0.1:8000/products/${deleteProductId}`,
+        `https://back-texnotech.onrender.com/products/${deleteProductId}`,
         {
           headers: {
             'Content-Type': 'application/json', 
@@ -348,7 +358,7 @@ const ProductsTable = () => {
 
       setIsUpdateProductModalOpen(false)
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Error updating product:', error);
     }
   }
 
@@ -369,6 +379,43 @@ const ProductsTable = () => {
       is_new: true,
       price: parseInt(productPrice),
     };
+
+
+    try {
+      if (!uploadedFile) {
+        console.log("No file uploaded.");
+      } else {
+        console.log("Uploaded File:", uploadedFile);
+    
+        const formData = new FormData();
+        formData.append("file", uploadedFile); 
+        formData.append("fileName", uploadedFile.name);
+        formData.append("fileSize", uploadedFile.size);
+    
+        try {
+          const response = await fetch("https://back-texnotech.onrender.com/files", {
+            method: "POST",
+            body: formData,
+          });
+    
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+    
+          const result = await response.json();
+          productPayload.image_link = result;
+          console.log(productPayload);
+          console.log("File uploaded successfully:", result);
+        } catch (error) {
+          console.log("Error uploading the file:", error);
+        }
+      }
+    } catch (error) {
+      console.log("Error printing the first photo:", error);
+    }
+  
+
+    
 
     try {
       const response = await axios.post(
@@ -659,6 +706,31 @@ const ProductsTable = () => {
                     />
                   </div>
 
+                  <div className="mb-4 col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Upload Product Image
+                    </label>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                      onChange={handleFileChangex}
+                    />
+                    
+                    {uploadedFile && (
+                      <div className="mt-4 flex items-center space-x-2">
+                        <img
+                          src={URL.createObjectURL(uploadedFile)}
+                          alt={uploadedFile.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <span className="text-white text-sm">{uploadedFile.name}</span>
+                      </div>
+                    )}
+
+                  </div>
+
                   <div className="mb-4 flex items-center">
                     <input
                       type="checkbox"
@@ -765,9 +837,6 @@ const ProductsTable = () => {
                           </div>
                         ))}
                       </div>
-                            
-
-                      
                     </div>
 
                     <div className="flex justify-end gap-4">
