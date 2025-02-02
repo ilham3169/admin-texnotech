@@ -454,6 +454,7 @@ const ProductsTable = () => {
   }
 
 
+
   return (
     
     <>
@@ -548,7 +549,7 @@ const ProductsTable = () => {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {product.category_id}
+                    {product.category_id} - {categories.find(category => category.id === product.category_id)?.name || 'Unknown'}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
