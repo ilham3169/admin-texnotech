@@ -125,7 +125,6 @@ const ProductsTable = () => {
         const result = await response.json();
         console.log(`Upload successful for ${file.name}:`, result);
 
-
         // -- //
 
         const imagePayload = {
@@ -133,7 +132,6 @@ const ProductsTable = () => {
           product_id: addedProductId, 
         };
 
-        console.log(imagePayload)
 
         const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
           method: "POST",
@@ -176,7 +174,11 @@ const ProductsTable = () => {
     axios
       .get('https://back-texnotech.onrender.com/categories')
       .then((response) => {
-        setCategories(response.data);
+        setCategories(response.data.filter(
+          (category) =>
+            category.id > 17
+        ).sort(
+          (obj1, obj2) => obj1.name.localeCompare(obj2.name)));
       })
       .catch((error) => {
         console.error('Error fetching categories:', error);
@@ -185,7 +187,8 @@ const ProductsTable = () => {
     axios
       .get('https://back-texnotech.onrender.com/brands')
       .then((response) => {
-        setBrands(response.data);
+        setBrands(response.data.sort(
+          (obj1, obj2) => obj1.name.localeCompare(obj2.name)));
       })
       .catch((error) => {
         console.error('Error fetching brands:', error);
@@ -307,7 +310,6 @@ const ProductsTable = () => {
           },
         }
       );
-      console.log(deleteProductId)
       setIsDeleteProductModalOpen(false)
 
     } catch (error) {
@@ -348,7 +350,7 @@ const ProductsTable = () => {
       is_new: true,
       price: parseInt(productPrice),
     };
-    console.log(productPayload, updateProductId)
+
     try {
       const response = await axios.put(
         'https://back-texnotech.onrender.com/products/' + updateProductId,
@@ -403,7 +405,7 @@ const ProductsTable = () => {
     
           const result = await response.json();
           productPayload.image_link = result;
-          console.log(productPayload);
+
           console.log("File uploaded successfully:", result);
         } catch (error) {
           console.log("Error uploading the file:", error);
@@ -549,11 +551,11 @@ const ProductsTable = () => {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {product.category_id} - {categories.find(category => category.id === product.category_id)?.name || 'Unknown'}
+                    {categories.find(category => category.id === product.category_id)?.name || 'Unknown'} ({product.category_id})
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    ${product.price.toFixed(2)}
+                    {product.price.toFixed(2)} AZN
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     {product.num_product}
