@@ -269,10 +269,7 @@ const ProductsTable = () => {
     axios
       .get('https://back-texnotech.onrender.com/categories')
       .then((response) => {
-        setCategories(response.data.filter(
-          (category) =>
-            category.id > 17
-        ).sort(
+        setCategories(response.data.sort(
           (obj1, obj2) => obj1.name.localeCompare(obj2.name)));
       })
       .catch((error) => {
@@ -511,9 +508,7 @@ const ProductsTable = () => {
     } catch (error) {
       console.log("Error printing the first photo:", error);
     }
-  
-
-    
+      
 
     try {
       const response = await axios.post(
@@ -525,6 +520,8 @@ const ProductsTable = () => {
       setIsModalOpen(false);
       handleCategorySpecifications();
       setIsNextModalIsOpen(true);
+
+      setUploadedFile(null)
     } catch (error) {
       console.error('Error adding product:', error);
     }
@@ -722,7 +719,10 @@ const ProductsTable = () => {
                       required
                     >
                       <option value="">Select</option>
-                      {categories.map((category) => (
+                      {categories.filter(
+                        (category) =>
+                          category.id > 17
+                      ).map((category) => (
                         <option key={category.id} value={category.id}>
                           {category.name}
                         </option>
