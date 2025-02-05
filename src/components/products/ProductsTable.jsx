@@ -31,6 +31,7 @@ const ProductsTable = () => {
   const [productKeywords, setProductKeywords] = useState('');
   const [productImageLink, setProductImageLink] = useState('')
   const [isSuperOffer, setIsSuperOffer] = useState(false);
+  const [productId, setProductId] = useState('');
 
   const [productSpecifications, setProductSpecifications] = useState([]);
 
@@ -49,12 +50,105 @@ const ProductsTable = () => {
   const [uploadStatus, setUploadStatus] = useState({});
   const [isUploadComplete, setIsUploadComplete] = useState(false); 
 
-
-
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
 
   const [uploadedFile, setUploadedFile] = useState(null);
+
+  const [extraImages, setExtraImages] = useState([]);
+
+
+  const uploadAndAddImage = async (file, productId) => {
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!uploadResponse.ok) {
+        throw new Error("Image upload failed.");
+      }
+  
+      const uploadResult = await uploadResponse.json();
+      const imageLink = uploadResult // Assuming the response contains the image link
+  
+      console.log(`Image uploaded successfully: ${imageLink}`);
+  
+      // Step 2: Add image to the database with product_id
+      const imagePayload = {
+        image_link: imageLink,
+        product_id: productId,
+      };
+  
+      const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(imagePayload),
+      });
+  
+      if (!dbResponse.ok) {
+        throw new Error("Failed to add image to the database.");
+      }
+  
+      const dbResult = await dbResponse.json();
+      console.log("Image added to database:", dbResult);
+  
+    } catch (error) {
+      console.error("Error in uploading and adding image:", error);
+    }
+  };
+
+
+  useEffect(() => {
+
+    fetch(`https://back-texnotech.onrender.com/images`)
+      .then((response) => response.json())
+      .then((data) => setExtraImages(data)) 
+      .catch((error) => console.error("Error fetching images:", error));
+  }, []);
+
+  
+  
+  const handleDeleteExtraImage = async (id) => {
+    try {
+      const response = await fetch(`https://back-texnotech.onrender.com/images/${id}`, {
+        method: 'DELETE',  
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image_id: id}), 
+      });
+  
+      if (response.ok) {
+        setExtraImages((prevImages) =>
+          prevImages.filter((image) => image.id !== id)
+        );
+      } else {
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  };
+  
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProductImageLink(reader.result); // Update the image preview
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
 
   const handleFileChangex = (e) => {
     const file = e.target.files[0];
@@ -78,6 +172,7 @@ const ProductsTable = () => {
     setUploadedFiles([]);
     setUploadStatus({});
     setIsUploadComplete(false);
+    setProductId('');
   };
 
   const handleAddProductClick = () => {
@@ -331,6 +426,7 @@ const ProductsTable = () => {
     setProductKeywords(product.search_string)
     setIsSuperOffer(product.is_super)
     setProductPrice(product.price)
+    setProductId(product.id)
   }
 
   const handleUpdateProduct = async (e) => {
@@ -338,6 +434,7 @@ const ProductsTable = () => {
 
     const productPayload = {
       name: productName,
+      id: parseInt(productId),
       category_id: parseInt(productCategoryId),
       num_product: parseInt(productStock),
       image_link: productImageLink,
@@ -348,7 +445,7 @@ const ProductsTable = () => {
       author_id: 1,
       is_super: isSuperOffer,
       is_new: true,
-      price: parseInt(productPrice),
+      price: parseInt(productPrice)
     };
 
     try {
@@ -959,6 +1056,7 @@ const ProductsTable = () => {
         )}
 
         {isUpdateProductModalOpen && (
+
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             initial={{ opacity: 0 }}
@@ -973,124 +1071,49 @@ const ProductsTable = () => {
               exit={{ scale: 0.8 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-semibold text-gray-100 mb-4">
-                Update Product
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">Update Product</h2>
               <form onSubmit={handleUpdateProduct}>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Product Name
-                    </label>
-                    <input
-                      type="text"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      required
-                    />
-                  </div>
+                  {[ 
+                    { label: "Product Name", type: "text", value: productName, onChange: setProductName },
+                    { label: "Model", type: "text", value: productModel, onChange: setProductModel },
+                    { label: "Price", type: "number", value: productPrice, onChange: setProductPrice },
+                    { label: "Discount", type: "number", value: productDiscount, onChange: setProductDiscount },
+                    { label: "Stock", type: "number", value: productStock, onChange: setProductStock },
+                    { label: "Keywords", type: "text", value: productKeywords, onChange: setProductKeywords },
+                    { label: "Id", type: "number", value: productId, onChange: setProductId }
+                  ].map(({ label, type, value, onChange }) => (
+                    <div key={label} className="mb-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+                      <input
+                        type={type}
+                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        required
+                      />
+                    </div>
+                  ))}
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Category
-                    </label>
-                    <select
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productCategoryId}
-                      onChange={handleCategoryChange}
-                      required
-                    >
-                      <option value="">Select</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Brand
-                    </label>
-                    <select
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productBrandId}
-                      onChange={handleBrandChange}
-                      required
-                    >
-                      <option value="">Select</option>
-                      {brands.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Model
-                    </label>
-                    <input
-                      type="text"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productModel}
-                      onChange={(e) => setProductModel(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Price
-                    </label>
-                    <input
-                      type="number"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productPrice}
-                      onChange={(e) => setProductPrice(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Discount
-                    </label>
-                    <input
-                      type="number"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productDiscount}
-                      onChange={(e) => setProductDiscount(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productStock}
-                      onChange={(e) => setProductStock(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Keywords
-                    </label>
-                    <input
-                      type="text"
-                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                      value={productKeywords}
-                      onChange={(e) => setProductKeywords(e.target.value)}
-                    />
-                  </div>
+                  {[ 
+                    { label: "Category", value: productCategoryId, onChange: handleCategoryChange, options: categories },
+                    { label: "Brand", value: productBrandId, onChange: handleBrandChange, options: brands }
+                  ].map(({ label, value, onChange, options }) => (
+                    <div key={label} className="mb-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+                      <select
+                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                        value={value}
+                        onChange={onChange}
+                        required
+                      >
+                        <option value="">Select</option>
+                        {options.map((option) => (
+                          <option key={option.id} value={option.id}>{option.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
 
                   <div className="mb-4 flex items-center">
                     <input
@@ -1101,29 +1124,133 @@ const ProductsTable = () => {
                     />
                     <span className="ml-2 text-sm text-gray-300">Super Offer</span>
                   </div>
+                </div>
 
-
-                  <div className="flex justify-end gap-4">
-                    <button
-                      type="button"
-                      className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
-                      onClick={() => setIsUpdateProductModalOpen(false)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
-                    >
-                      Updatexgi
-                    </button>
+                <h2 className="text-xl font-semibold text-gray-100 mb-4">Product Related Images</h2>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Main Page Photo</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      className="bg-gray-700 text-white rounded-lg p-2"
+                      onChange={handleImageUpload}
+                    />
+                    {productImageLink && (
+                      <img 
+                        src={productImageLink} 
+                        alt="Product Preview" 
+                        className="w-20 h-20 rounded-lg object-cover" 
+                        onClick={() => setIsImageModalOpen(true)}
+                      />
+                    )}
                   </div>
+                </div>
+
+
+                <h1 className="block text-sm font-medium text-gray-300 mb-2">Additional Product Images</h1>
+
+                <div className="mb-4">
+
+                <div className="mt-4 flex flex-wrap gap-6">
+
+                {extraImages.filter(image => image.product_id === productId).length === 0 && (
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      className="bg-gray-700 text-white rounded-lg p-1 w-25"
+                      onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
+                    />
+                  </div>
+                )}
+
+
+
+                {extraImages
+                  .filter(image => image.product_id === productId)
+                  .map((image, index) => (
+                    <div className="flex items-center gap-4" key={index}>
+                      <div className="relative">
+                        {/* Image preview */}
+                        <img
+                          src={image.image_link}
+                          alt={`Extra Image ${index + 1}`}
+                          className="w-20 h-20 rounded-lg object-cover cursor-pointer"
+                          onClick={() => setIsImageModalOpen(true)}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          className="bg-gray-700 text-white rounded-lg p-1 w-24"
+                          onChange={handleImageUpload}
+                        />
+                      </div>
+
+                      {/* Red cross icon */}
+                      <span
+                        onClick={() => {
+                          const isConfirmed = window.confirm("Are you sure you want to delete this image?");
+                          if (isConfirmed) {
+                            handleDeleteExtraImage(image.id);
+                          }
+                        }}
+                        className="text-red-500 cursor-pointer"
+                      >
+                        &#10006;
+                      </span>
+                      
+                    </div>
+
+
+                  ))}
+                </div>
+              </div>
+
+
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                    onClick={() => setIsUpdateProductModalOpen(false)}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                  >
+                    Update
+                  </button>
                 </div>
               </form>
             </motion.div>
           </motion.div>
-        )}
+        )}        
       </motion.div>
+
+      {isImageModalOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <motion.img
+            src={productImageLink}
+            alt="Zoomed Image"
+            className="max-w-full max-h-full rounded-lg"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.8 }}
+            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking on image
+          />
+        </motion.div>
+      )}
+  
+
+
     </>
   );
 };
