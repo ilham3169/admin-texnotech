@@ -59,6 +59,57 @@ const ProductsTable = () => {
 
   const [extraImages, setExtraImages] = useState([]);
 
+  const [zoomedImage, setZoomedImage] = useState(null);
+
+  const [mainImageZoomed, setMainImageZoomed] = useState(null);
+  const [extraImageZoomed, setExtraImageZoomed] = useState(null);
+
+
+  
+  const uploadMainImage = async (file, productId) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!uploadResponse.ok) {
+        throw new Error("Image upload failed.");
+      }
+  
+      const uploadResult = await uploadResponse.json();
+      const imageLink = uploadResult
+  
+      console.log(`Image uploaded successfully: ${imageLink}`);
+  
+      const imagePayload = {
+        image_link: imageLink,
+      };
+  
+      const dbResponse = await fetch(`http://127.0.0.1:8000/products/${productId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(imagePayload),
+      });
+  
+      if (!dbResponse.ok) {
+        throw new Error("Failed to add image to the database.");
+      }
+  
+      const dbResult = await dbResponse.json();
+      console.log("Image added to database:", dbResult);
+  
+    } catch (error) {
+      console.error("Error in uploading and adding image:", error);
+    }
+
+  }
+
 
   const uploadAndAddImage = async (file, productId) => {
     const formData = new FormData();
@@ -141,6 +192,7 @@ const ProductsTable = () => {
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setProductImageLink(reader.result); // Update the image preview
@@ -1127,44 +1179,46 @@ const ProductsTable = () => {
                 </div>
 
                 <h2 className="text-xl font-semibold text-gray-100 mb-4">Product Related Images</h2>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Main Page Photo</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="file"
-                      className="bg-gray-700 text-white rounded-lg p-2"
-                      onChange={handleImageUpload}
-                    />
-                    {productImageLink && (
-                      <img 
-                        src={productImageLink} 
-                        alt="Product Preview" 
-                        className="w-20 h-20 rounded-lg object-cover" 
-                        onClick={() => setIsImageModalOpen(true)}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Main Page Photo</label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        className="bg-gray-700 text-white rounded-lg p-2"
+                        onChange={(event) => uploadMainImage(event.target.files[0], productId)}
                       />
-                    )}
+                      {productImageLink && (
+                        <img 
+                          src={productImageLink} 
+                          alt="Product Preview" 
+                          className="w-20 h-20 rounded-lg object-cover cursor-pointer" 
+                          onClick={() => {
+                            setMainImageZoomed(productImageLink);  // Set the main image
+                            setExtraImageZoomed(null);  // Clear extra image selection
+                            setIsImageModalOpen(true);  // Open modal
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
 
 
                 <h1 className="block text-sm font-medium text-gray-300 mb-2">Additional Product Images</h1>
 
                 <div className="mb-4">
-
-                <div className="mt-4 flex flex-wrap gap-6">
-
-                {extraImages.filter(image => image.product_id === productId).length === 0 && (
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="file"
-                      className="bg-gray-700 text-white rounded-lg p-1 w-25"
-                      onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
-                    />
-                  </div>
-                )}
+                  <div className="mt-4 flex flex-wrap gap-6">
+                  {extraImages.filter(image => image.product_id === productId).length === 0 && (
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        className="bg-gray-700 text-white rounded-lg p-1 w-25"
+                        onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
+                      />
+                    </div>
+                  )}
 
 
-
+                
                 {extraImages
                   .filter(image => image.product_id === productId)
                   .map((image, index) => (
@@ -1175,8 +1229,13 @@ const ProductsTable = () => {
                           src={image.image_link}
                           alt={`Extra Image ${index + 1}`}
                           className="w-20 h-20 rounded-lg object-cover cursor-pointer"
-                          onClick={() => setIsImageModalOpen(true)}
-                        />
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setExtraImageZoomed(image.image_link);  // Set clicked extra image
+                            setMainImageZoomed(null);  // Clear main image selection
+                            setIsImageModalOpen(true);  // Open modal
+                          }}
+                          />
                       </div>
 
                       <div className="flex items-center gap-4">
@@ -1187,7 +1246,6 @@ const ProductsTable = () => {
                         />
                       </div>
 
-                      {/* Red cross icon */}
                       <span
                         onClick={() => {
                           const isConfirmed = window.confirm("Are you sure you want to delete this image?");
@@ -1238,7 +1296,7 @@ const ProductsTable = () => {
           onClick={() => setIsImageModalOpen(false)}
         >
           <motion.img
-            src={productImageLink}
+            src={mainImageZoomed || extraImageZoomed}  // Use the image based on selection
             alt="Zoomed Image"
             className="max-w-full max-h-full rounded-lg"
             initial={{ scale: 0.8 }}
@@ -1248,7 +1306,7 @@ const ProductsTable = () => {
           />
         </motion.div>
       )}
-  
+        
 
 
     </>
