@@ -82,9 +82,7 @@ const ProductsTable = () => {
   
       const uploadResult = await uploadResponse.json();
       const imageLink = uploadResult
-  
-      console.log(`Image uploaded successfully: ${imageLink}`);
-  
+    
       const imagePayload = {
         image_link: imageLink,
       };
@@ -126,13 +124,13 @@ const ProductsTable = () => {
       }
   
       const uploadResult = await uploadResponse.json();
-      const imageLink = uploadResult // Assuming the response contains the image link
+      const imageLinkAdditional = uploadResult // Assuming the response contains the image link
   
-      console.log(`Image uploaded successfully: ${imageLink}`);
+      console.log(`Image uploaded successfully: ${imageLinkAdditional}`);
   
       // Step 2: Add image to the database with product_id
       const imagePayload = {
-        image_link: imageLink,
+        image_link: imageLinkAdditional,
         product_id: productId,
       };
   
@@ -200,7 +198,7 @@ const ProductsTable = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
 
   const handleFileChangex = (e) => {
     const file = e.target.files[0];
@@ -1181,24 +1179,27 @@ const ProductsTable = () => {
                 <h2 className="text-xl font-semibold text-gray-100 mb-4">Product Related Images</h2>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">Main Page Photo</label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 w-50">
+                      
+                      {productImageLink && (
+                          <img 
+                            src={productImageLink} 
+                            alt="Product Preview" 
+                            className="w-20 h-20 rounded-lg object-cover cursor-pointer" 
+                            onClick={() => {
+                              setMainImageZoomed(productImageLink);  // Set the main image
+                              setExtraImageZoomed(null);  // Clear extra image selection
+                              setIsImageModalOpen(true);  // Open modal
+                            }}
+                          />
+                      )}
+
                       <input
                         type="file"
-                        className="bg-gray-700 text-white rounded-lg p-2"
+                        className="bg-gray-700 text-white rounded-lg p-2 w-30"
+                        style={{width: "100%"}}
                         onChange={(event) => uploadMainImage(event.target.files[0], productId)}
                       />
-                      {productImageLink && (
-                        <img 
-                          src={productImageLink} 
-                          alt="Product Preview" 
-                          className="w-20 h-20 rounded-lg object-cover cursor-pointer" 
-                          onClick={() => {
-                            setMainImageZoomed(productImageLink);  // Set the main image
-                            setExtraImageZoomed(null);  // Clear extra image selection
-                            setIsImageModalOpen(true);  // Open modal
-                          }}
-                        />
-                      )}
                     </div>
                   </div>
 
@@ -1207,63 +1208,62 @@ const ProductsTable = () => {
 
                 <div className="mb-4">
                   <div className="mt-4 flex flex-wrap gap-6">
-                  {extraImages.filter(image => image.product_id === productId).length === 0 && (
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="file"
-                        className="bg-gray-700 text-white rounded-lg p-1 w-25"
-                        onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
-                      />
-                    </div>
-                  )}
-
-
-                
-                {extraImages
-                  .filter(image => image.product_id === productId)
-                  .map((image, index) => (
-                    <div className="flex items-center gap-4" key={index}>
-                      <div className="relative">
-                        {/* Image preview */}
-                        <img
-                          src={image.image_link}
-                          alt={`Extra Image ${index + 1}`}
-                          className="w-20 h-20 rounded-lg object-cover cursor-pointer"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setExtraImageZoomed(image.image_link);  // Set clicked extra image
-                            setMainImageZoomed(null);  // Clear main image selection
-                            setIsImageModalOpen(true);  // Open modal
-                          }}
-                          />
-                      </div>
-
+                    {extraImages.filter(image => image.product_id === productId).length === 0 && (
                       <div className="flex items-center gap-4">
                         <input
                           type="file"
-                          className="bg-gray-700 text-white rounded-lg p-1 w-24"
-                          onChange={handleImageUpload}
+                          className="bg-gray-700 text-white rounded-lg p-1 w-25"
+                          onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
                         />
                       </div>
+                    )}
 
-                      <span
-                        onClick={() => {
-                          const isConfirmed = window.confirm("Are you sure you want to delete this image?");
-                          if (isConfirmed) {
-                            handleDeleteExtraImage(image.id);
-                          }
-                        }}
-                        className="text-red-500 cursor-pointer"
-                      >
-                        &#10006;
-                      </span>
-                      
-                    </div>
+                    {extraImages
+                      .filter(image => image.product_id === productId)
+                      .map((image, index) => (
+                        <div className="flex items-center gap-2 w-50" key={index}>
+                          <div className="w-20">
+                            {/* Image preview */}
+                            <img
+                              src={image.image_link}
+                              alt={`Extra Image ${index + 1}`}
+                              className="h-20 rounded-lg object-cover cursor-pointer"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setExtraImageZoomed(image.image_link);  // Set clicked extra image
+                                setMainImageZoomed(null);  // Clear main image selection
+                                setIsImageModalOpen(true);  // Open modal
+                              }}
+                              />
+                          </div>
+
+                          <div className="flex items-center gap-4 w-30">
+                            <input
+                              type="file"
+                              className="bg-gray-700 text-white rounded-lg p-1"
+                              style={{width: "100%"}}
+                              onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
+                            />
+                          </div>
+
+                          <span
+                            onClick={() => {
+                              const isConfirmed = window.confirm("Are you sure you want to delete this image?");
+                              if (isConfirmed) {
+                                handleDeleteExtraImage(image.id);
+                              }
+                            }}
+                            className="text-red-500 cursor-pointer"
+                          >
+                            &#10006;
+                          </span>
+                          
+                        </div>
 
 
-                  ))}
+                      ))}
+                  </div>
                 </div>
-              </div>
 
 
                 <div className="flex justify-end gap-4">
