@@ -76,7 +76,7 @@ const ProductsTable = () => {
         method: "POST",
         body: formData,
       });
-  
+
       if (!uploadResponse.ok) {
         throw new Error("Image upload failed.");
       }
@@ -88,14 +88,14 @@ const ProductsTable = () => {
         image_link: imageLink,
       };
   
-      const dbResponse = await fetch(`http://127.0.0.1:8000/products/${productId}`, {
+      const dbResponse = await fetch(`https://back-texnotech.onrender.com/products/${productId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(imagePayload),
       });
-  
+
       if (!dbResponse.ok) {
         throw new Error("Failed to add image to the database.");
       }
@@ -187,19 +187,6 @@ const ProductsTable = () => {
     }
   };
   
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setUploadedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProductImageLink(reader.result); // Update the image preview
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
 
   const handleFileChangex = (e) => {
     const file = e.target.files[0];
