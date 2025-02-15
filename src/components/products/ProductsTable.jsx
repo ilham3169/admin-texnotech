@@ -276,8 +276,7 @@ const ProductsTable = () => {
           throw new Error(`Failed to add image to database for ${file.name}`);
         }
 
-        const dbResult = await dbResponse.json();
-        console.log(`Image added to database for ${file.name}:`, dbResult);
+        console.log(`Image added to database for ${file.name}:`);
 
         setUploadStatus((prevStatus) => ({
           ...prevStatus,
@@ -1271,31 +1270,32 @@ const ProductsTable = () => {
                               />
                           </div>
 
-                          <div className="flex items-center gap-4 w-30">
-                            <input
-                              type="file"
-                              className="bg-gray-700 text-white rounded-lg p-1"
-                              style={{width: "100%"}}
-                              onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
-                            />
-                          </div>
-
-                          <span
-                            onClick={() => {
-                              const isConfirmed = window.confirm("Are you sure you want to delete this image?");
-                              if (isConfirmed) {
-                                handleDeleteExtraImage(image.id);
-                              }
-                            }}
-                            className="text-red-500 cursor-pointer"
-                          >
-                            &#10006;
-                          </span>
+                        <span
+                          onClick={() => {
+                            const isConfirmed = window.confirm("Are you sure you want to delete this image?");
+                            if (isConfirmed) {
+                              handleDeleteExtraImage(image.id);
+                            }
+                          }}
+                          className="text-red-500 cursor-pointer"
+                        >
+                          &#10006;
+                        </span>
                           
-                        </div>
+                      </div>
 
 
-                      ))}
+                      ))
+                    }
+
+                    <div className="flex items-center gap-4 w-30">
+                      <input
+                        type="file"
+                        className="bg-gray-700 text-white rounded-lg p-1"
+                        style={{width: "100%"}}
+                        onChange={(event) => uploadAndAddImage(event.target.files[0], productId)}
+                      />
+                    </div>
                   </div>
                 </div>
 
