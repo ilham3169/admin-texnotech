@@ -1073,16 +1073,17 @@ const ProductsTable = () => {
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
               onClick={(e) => e.stopPropagation()}
-              style={{maxWidth: "14%"}}
             >
               <div>
+
                 <h2 className="text-xl font-semibold text-gray-100 mb-4" style={{textAlign: "center"}}>
                   Confirm deletion
                 </h2>
-                <form onSubmit={handleDeleteProduct}>
-                  <div className="grid grid-cols-2 gap-4">
 
-                    <div className="flex gap-4">
+                <form onSubmit={handleDeleteProduct}>
+                  <div className="grid grid-cols-2 gap-4" style={{justifyContent: "center", display: "flex"}}>
+
+                    <div className="flex gap-4" >
                       <button
                         type="button"
                         className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
