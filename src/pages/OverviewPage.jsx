@@ -15,7 +15,7 @@ const OverviewPage = () => {
 	const [allProducts, setAllProducts] = useState([]); 
 
 	useEffect(() => {
-		fetch("https://back-texnotech.onrender.com/products")
+		fetch("https://texnotech.store/products")
 			.then((response) => response.json())
 			.then((data) => {
 			const products = data.map((product) => ({
