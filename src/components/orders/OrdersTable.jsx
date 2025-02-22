@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Eye, X } from "lucide-react";
+import { Search, Eye, X, Trash2, RefreshCcw } from "lucide-react";
+
+import axios from 'axios';
+
 
 const OrdersTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,40 +13,45 @@ const OrdersTable = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productDetails, setProductDetails] = useState({});
 
+  const [deleteOrderId, setDeleteOrderId] = useState(null)
+  const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch("https://texnotech.store/orders");
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+      setOrders(data);
+      setFilteredOrders(data);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch("https://texnotech.store/orders");
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        setOrders(data);
-        setFilteredOrders(data);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    };
     fetchOrders();
   }, []);
 
+  const fetchProductDetails = async () => {
+    if (!selectedOrder || !selectedOrder.order_items) return;
+    const details = {};
+    await Promise.all(
+      selectedOrder.order_items.map(async (item) => {
+        try {
+          const response = await fetch(`https://texnotech.store/products/${item.product_id}`);
+          if (!response.ok) throw new Error(`Failed to fetch product ${item.product_id}`);
+          const productData = await response.json();
+          details[item.product_id] = productData;
+        } catch (error) {
+          console.error(`Error fetching product ${item.product_id}:`, error);
+          details[item.product_id] = { name: "Unknown Product", price: item.price_at_purchase };
+        }
+      })
+    );
+    setProductDetails(details);
+  };
+
   useEffect(() => {
-    const fetchProductDetails = async () => {
-      if (!selectedOrder || !selectedOrder.order_items) return;
-      const details = {};
-      await Promise.all(
-        selectedOrder.order_items.map(async (item) => {
-          try {
-            const response = await fetch(`https://texnotech.store/products/${item.product_id}`);
-            if (!response.ok) throw new Error(`Failed to fetch product ${item.product_id}`);
-            const productData = await response.json();
-            details[item.product_id] = productData;
-          } catch (error) {
-            console.error(`Error fetching product ${item.product_id}:`, error);
-            details[item.product_id] = { name: "Unknown Product", price: item.price_at_purchase };
-          }
-        })
-      );
-      setProductDetails(details);
-    };
     fetchProductDetails();
   }, [selectedOrder]);
 
@@ -113,6 +121,30 @@ const OrdersTable = () => {
 	}
   };
 
+  const handleSelectDeleteOrder = async (order_id) => {
+    setDeleteOrderId(order_id)
+    setIsDeleteOrderModalOpen(true)
+  }
+
+  const handleDeleteOrder = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await axios.delete(
+        `https://texnotech.store/orders/${deleteOrderId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json', 
+          },
+        }
+      );
+      setIsDeleteOrderModalOpen(false)
+
+    } catch (error) {
+      console.error('Error deleting order:', error);
+    }
+  }
+
   const statusOptions = ["pending", "processing", "shipped", "delivered", "canceled"];
   
   return (
@@ -124,7 +156,15 @@ const OrdersTable = () => {
         transition={{ delay: 0.4 }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-100">Sifarişlərin siyahısı</h2>
+          <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+            <h2 className="text-xl font-semibold text-gray-100">Sifarişlərin siyahısı</h2>
+            <button
+              onClick={fetchOrders}
+              className=" hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex"
+            >
+              <RefreshCcw size={20} />
+            </button>
+          </div>
           <div className="relative">
             <input
               type="text"
@@ -182,24 +222,24 @@ const OrdersTable = () => {
                     ${order.total_price}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-					<span
-						className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-						order.status === "delivered"
-							? "bg-green-100 text-green-800"
-							: order.status === "processing"
-							? "bg-yellow-100 text-yellow-800"
-							: order.status === "shipped"
-							? "bg-blue-100 text-blue-800"
-							: order.status === "pending"
-							? "bg-gray-100 text-gray-800"
-							: order.status === "canceled"
-							? "bg-red-100 text-red-800"
-							: "bg-gray-100 text-gray-800" // Default case
-						}`}
-					>
-						{order.status}
-					</span>
-					</td>
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      order.status === "delivered"
+                        ? "bg-green-100 text-green-800"
+                        : order.status === "processing"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : order.status === "shipped"
+                        ? "bg-blue-100 text-blue-800"
+                        : order.status === "pending"
+                        ? "bg-gray-100 text-gray-800"
+                        : order.status === "canceled"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800" // Default case
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -220,6 +260,11 @@ const OrdersTable = () => {
                       className="text-indigo-400 hover:text-indigo-300 mr-2"
                     >
                       <Eye size={20} />
+                    </button>
+                    <button className="text-red-400 hover:text-red-300"
+                      onClick={() => handleSelectDeleteOrder(order.id)}
+                    >
+                      <Trash2 size={18} />
                     </button>
                   </td>
                 </motion.tr>
@@ -383,6 +428,52 @@ const OrdersTable = () => {
             >
               Bağla
             </button>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {isDeleteOrderModalOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setIsDeleteOrderModalOpen(false)}
+        >
+          <motion.div
+            className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.8 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+
+              <h2 className="text-xl font-semibold text-gray-100 mb-4" style={{textAlign: "center"}}>
+                Silinməni təsdiqləyin
+              </h2>
+
+              <form onSubmit={handleDeleteOrder}>
+                <div className="grid grid-cols-2 gap-4" style={{justifyContent: "center", display: "flex"}}>
+
+                  <div className="flex gap-4" >
+                    <button
+                      type="button"
+                      className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                      onClick={() => setIsDeleteOrderModalOpen(false)}
+                    >
+                      Bağla
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                    >
+                      Təsdiqlə
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </motion.div>
       )}
