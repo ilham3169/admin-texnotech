@@ -643,10 +643,10 @@ const ProductsTable = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
       >
-					<StatCard name='Total Products' icon={Package} value={totalNumProducts} color='#6366F1' />
-					<StatCard name='New Products' icon={TrendingUp} value={newNumProducts} color='#10B981' />
-					<StatCard name='Super Products' icon={AlertTriangle} value={superNumProducts} color='#F59E0B' />
-					<StatCard name='Total Price' icon={DollarSign} value={priceTotalProducts} color='#EF4444' />
+					<StatCard name='Ümumi Məhsul Sayı' icon={Package} value={totalNumProducts} color='#6366F1' />
+					<StatCard name='Yeni Məhsullar Sayı' icon={TrendingUp} value={newNumProducts} color='#10B981' />
+					<StatCard name='Super Məhsullar Sayı' icon={AlertTriangle} value={superNumProducts} color='#F59E0B' />
+					<StatCard name='Ümumi Qiymət' icon={DollarSign} value={priceTotalProducts} color='#EF4444' />
 				</motion.div>
       <motion.div
         className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8"
@@ -655,12 +655,12 @@ const ProductsTable = () => {
         transition={{ delay: 0.2 }}
       >
         <div className="flex items-center mb-6" style={{ gap: '2%' }}>
-          <h2 className="text-xl font-semibold text-gray-100">Product List</h2>
+          <h2 className="text-xl font-semibold text-gray-100">Məhsulların siyahısı</h2>
 
           <div className="relative">
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Məhsulları axtar..."
               className="bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={handleSearch}
               value={searchTerm}
@@ -673,7 +673,7 @@ const ProductsTable = () => {
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
             <Plus size={18} />
-            Add Product
+            Məhsul əlavə et
           </button>
 
           <button
@@ -689,22 +689,22 @@ const ProductsTable = () => {
             <thead>
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Name
+                  Ad
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Category
+                  Kateqoriya
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Price
+                  Qiymət
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Stock
+                  Kəmiyyət
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Sales
+                  Satış
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Actions
+                  Fəaliyyətlər
                 </th>
               </tr>
             </thead>
@@ -774,13 +774,13 @@ const ProductsTable = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-semibold text-gray-100 mb-4">
-                Add New Product
+                Məhsul əlavə et
               </h2>
               <form onSubmit={handleAddProduct}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Product Name
+                      Məhsulun adı
                     </label>
                     <input
                       type="text"
@@ -793,7 +793,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Category
+                      Kateqoriya
                     </label>
                     <select
                       className="bg-gray-700 text-white rounded-lg p-2 w-full"
@@ -815,7 +815,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Brand
+                      Brend
                     </label>
                     <select
                       className="bg-gray-700 text-white rounded-lg p-2 w-full"
@@ -847,7 +847,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Price
+                      Qiymət
                     </label>
                     <input
                       type="number"
@@ -860,7 +860,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Discount
+                      Endirim
                     </label>
                     <input
                       type="number"
@@ -872,7 +872,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Stock
+                      Kəmiyyət
                     </label>
                     <input
                       type="number"
@@ -885,7 +885,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Keywords
+                      Açar sözlər
                     </label>
                     <input
                       type="text"
@@ -897,7 +897,7 @@ const ProductsTable = () => {
 
                   <div className="mb-4 col-span-2">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Upload Product Image
+                      Məhsul şəklini yüklə
                     </label>
 
                     <input
@@ -927,7 +927,7 @@ const ProductsTable = () => {
                       onChange={() => setIsSuperOffer(!isSuperOffer)}
                       className="text-indigo-600"
                     />
-                    <span className="ml-2 text-sm text-gray-300">Super Offer</span>
+                    <span className="ml-2 text-sm text-gray-300">Super Təklif</span>
                   </div>
 
                   <div className="flex justify-end gap-4">
@@ -936,13 +936,13 @@ const ProductsTable = () => {
                       className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                       onClick={() => setIsModalOpen(false)}
                     >
-                      Close
+                      Bağla
                     </button>
                     <button
                       type="submit"
                       className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                     >
-                      Next
+                      Növbəti
                     </button>
                   </div>
                 </div>
@@ -968,7 +968,7 @@ const ProductsTable = () => {
             >
               <div>
                 <h2 className="text-xl font-semibold text-gray-100 mb-4">
-                  Fill up specifications
+                  Spesifikasiyaları doldur
                 </h2>
                 <form onSubmit={handleAddProductSpecifications}>
                   <div className="grid grid-cols-2 gap-4">
@@ -990,7 +990,7 @@ const ProductsTable = () => {
                     <div className="mb-4 col-span-2">
 
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Upload Product Images
+                        Məhsul şəkillərini yüklə
                       </label>
 
                       <input
@@ -1034,14 +1034,14 @@ const ProductsTable = () => {
                         className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                         onClick={() => setIsNextModalIsOpen(false)}
                       >
-                        Close
+                        Bağla
                       </button>
                       <button
                         type="submit"
                         className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                         onClick={uploadFiles}
                       >
-                        Finish
+                        Bitir
                       </button>
                     </div>
                   </div>
@@ -1049,7 +1049,7 @@ const ProductsTable = () => {
 
                 {isUploadComplete && (
                   <div className="mt-4 text-green-500 text-sm">
-                    All photos have been uploaded successfully!
+                    Bütün şəkillər uğurla yükləndi!
                   </div>
                 )}
 
@@ -1077,7 +1077,7 @@ const ProductsTable = () => {
               <div>
 
                 <h2 className="text-xl font-semibold text-gray-100 mb-4" style={{textAlign: "center"}}>
-                  Confirm deletion
+                  Silinməni təsdiqləyin
                 </h2>
 
                 <form onSubmit={handleDeleteProduct}>
@@ -1089,13 +1089,13 @@ const ProductsTable = () => {
                         className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                         onClick={() => setIsDeleteProductModalOpen(false)}
                       >
-                        Cancel
+                        Bağla
                       </button>
                       <button
                         type="submit"
                         className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                       >
-                        Confirm
+                        Təsdiqlə
                       </button>
                     </div>
                   </div>
@@ -1122,17 +1122,17 @@ const ProductsTable = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-xl font-semibold text-gray-100 mb-4">
-                Product Has Been Added
+                Məhsul əlavə edilib
               </h2>
               <p className="text-gray-300 mb-4">
-                The product and its specifications have been successfully added.
+                Məhsul və onun spesifikasiyası uğurla əlavə edildi.
               </p>
               <div className="flex justify-end">
                 <button
                   className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                   onClick={() => setIsSuccessModalOpen(false)}
                 >
-                  Close
+                  Bağla
                 </button>
               </div>
             </motion.div>
@@ -1155,16 +1155,16 @@ const ProductsTable = () => {
               exit={{ scale: 0.8 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-semibold text-gray-100 mb-4">Update Product</h2>
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">Məhsulu Yenilə</h2>
               <form onSubmit={handleUpdateProduct}>
                 <div className="grid grid-cols-2 gap-4">
                   {[ 
-                    { label: "Product Name", type: "text", value: productName, onChange: setProductName },
+                    { label: "Məhsulun adı", type: "text", value: productName, onChange: setProductName },
                     { label: "Model", type: "text", value: productModel, onChange: setProductModel },
-                    { label: "Price", type: "number", value: productPrice, onChange: setProductPrice },
-                    { label: "Discount", type: "number", value: productDiscount, onChange: setProductDiscount },
-                    { label: "Stock", type: "number", value: productStock, onChange: setProductStock },
-                    { label: "Keywords", type: "text", value: productKeywords, onChange: setProductKeywords },
+                    { label: "Qiymət", type: "number", value: productPrice, onChange: setProductPrice },
+                    { label: "Endirim", type: "number", value: productDiscount, onChange: setProductDiscount },
+                    { label: "Kəmiyyət", type: "number", value: productStock, onChange: setProductStock },
+                    { label: "Açar sözlər", type: "text", value: productKeywords, onChange: setProductKeywords },
                     { label: "Id", type: "number", value: productId, onChange: setProductId }
                   ].map(({ label, type, value, onChange }) => (
                     <div key={label} className="mb-4">
@@ -1180,8 +1180,8 @@ const ProductsTable = () => {
                   ))}
 
                   {[ 
-                    { label: "Category", value: productCategoryId, onChange: handleCategoryChange, options: categories },
-                    { label: "Brand", value: productBrandId, onChange: handleBrandChange, options: brands }
+                    { label: "Kateqoriya", value: productCategoryId, onChange: handleCategoryChange, options: categories },
+                    { label: "Brend", value: productBrandId, onChange: handleBrandChange, options: brands }
                   ].map(({ label, value, onChange, options }) => (
                     <div key={label} className="mb-4">
                       <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
@@ -1191,7 +1191,7 @@ const ProductsTable = () => {
                         onChange={onChange}
                         required
                       >
-                        <option value="">Select</option>
+                        <option value="">Sec</option>
                         {options.map((option) => (
                           <option key={option.id} value={option.id}>{option.name}</option>
                         ))}
@@ -1206,13 +1206,13 @@ const ProductsTable = () => {
                       onChange={() => setIsSuperOffer(!isSuperOffer)}
                       className="text-indigo-600"
                     />
-                    <span className="ml-2 text-sm text-gray-300">Super Offer</span>
+                    <span className="ml-2 text-sm text-gray-300">Super Təklif</span>
                   </div>
                 </div>
 
-                <h2 className="text-xl font-semibold text-gray-100 mb-4">Product Related Images</h2>
+                <h2 className="text-xl font-semibold text-gray-100 mb-4">Məhsulla əlaqəli Şəkillər</h2>
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Main Page Photo</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Əsas Səhifə Şəkili</label>
                     <div className="flex items-center gap-4 w-50">
                       
                       {productImageLink && (
@@ -1238,7 +1238,7 @@ const ProductsTable = () => {
                   </div>
 
 
-                <h1 className="block text-sm font-medium text-gray-300 mb-2">Additional Product Images</h1>
+                <h1 className="block text-sm font-medium text-gray-300 mb-2">Əlavə məhsul şəkilləri</h1>
 
                 <div className="mb-4">
                   <div className="mt-4 flex flex-wrap gap-6">
@@ -1307,13 +1307,13 @@ const ProductsTable = () => {
                     className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                     onClick={() => setIsUpdateProductModalOpen(false)}
                   >
-                    Close
+                    Bağla
                   </button>
                   <button
                     type="submit"
                     className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                   >
-                    Next
+                    Növbəti
                   </button>
                 </div>
               </form>
@@ -1359,7 +1359,7 @@ const ProductsTable = () => {
           >
             <div>
               <h2 className="text-xl font-semibold text-gray-100 mb-4">
-                Update product specifications
+                Məhsulun spesifikasiyalarını yeniləyin
               </h2>
               <form onSubmit={handleUpdateProductSpecifications}>
                 <div className="grid grid-cols-2 gap-4">
@@ -1374,7 +1374,6 @@ const ProductsTable = () => {
                         onChange={(e) =>
                           handleProductSpecificationInput(e.target.value, specification.id)
                         }
-                        // value={specification.value}
                       />
                     </div>
                   ))}
@@ -1385,13 +1384,13 @@ const ProductsTable = () => {
                       className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                       onClick={() => setIsUpdateProductSpecificationsModalOpen(false)}
                     >
-                      Close
+                      Bağla
                     </button>
                     <button
                       type="submit"
                       className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                     >
-                      Finish
+                      Bitir
                     </button>
                   </div>
                 </div>
@@ -1399,7 +1398,7 @@ const ProductsTable = () => {
 
               {isUploadComplete && (
                 <div className="mt-4 text-green-500 text-sm">
-                  All photos have been uploaded successfully!
+                  Bütün şəkillər uğurla yükləndi!
                 </div>
               )}
 
