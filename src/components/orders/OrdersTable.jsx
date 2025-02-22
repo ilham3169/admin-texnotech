@@ -124,11 +124,11 @@ const OrdersTable = () => {
         transition={{ delay: 0.4 }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-100">Order List</h2>
+          <h2 className="text-xl font-semibold text-gray-100">Sifarişlərin siyahısı</h2>
           <div className="relative">
             <input
               type="text"
-              placeholder="Search orders..."
+              placeholder="Sifarişləri axtar..."
               className="bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={handleSearch}
@@ -142,25 +142,25 @@ const OrdersTable = () => {
             <thead>
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Order ID
+                  Sifariş ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Customer
+                  Müştəri
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Total
+                  Cəmi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Payment
+                  Ödəniş
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Date
+                  Tarix
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Actions
+                  Fəaliyyətlər
                 </th>
               </tr>
             </thead>
@@ -245,7 +245,7 @@ const OrdersTable = () => {
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-white tracking-tight">
-                Order #{selectedOrder.id}
+                Sifariş #{selectedOrder.id}
               </h3>
               <button
                 onClick={closeModal}
@@ -259,17 +259,17 @@ const OrdersTable = () => {
             <div className="space-y-4 text-gray-200">
               <div className="grid grid-cols-2 gap-4">
                 <p>
-                  <span className="font-semibold text-indigo-300">Customer:</span>
+                  <span className="font-semibold text-indigo-300">Müştəri:</span>
                   <br />
                   {selectedOrder.name} {selectedOrder.surname}
                 </p>
                 <p>
-                  <span className="font-semibold text-indigo-300">Phone:</span>
+                  <span className="font-semibold text-indigo-300">Telefon:</span>
                   <br />
                   {selectedOrder.phone_number}
                 </p>
                 <p>
-                  <span className="font-semibold text-indigo-300">Total:</span>
+                  <span className="font-semibold text-indigo-300">Cəmi:</span>
                   <br />
                   <span className="text-green-400">${selectedOrder.total_price}</span>
                 </p>
@@ -278,22 +278,22 @@ const OrdersTable = () => {
                     <span className="font-semibold text-indigo-300">Status:</span>
                     <br />
                     <span
-						className={`px-2 py-1 rounded-full text-xs font-medium ${
-							selectedOrder.status === "delivered"
-							? "bg-green-500/20 text-green-300"
-							: selectedOrder.status === "processing"
-							? "bg-yellow-500/20 text-yellow-300"
-							: selectedOrder.status === "shipped"
-							? "bg-blue-500/20 text-blue-300"
-							: selectedOrder.status === "pending"
-							? "bg-gray-500/20 text-gray-300"
-							: selectedOrder.status === "canceled"
-							? "bg-red-500/20 text-red-300"
-							: "bg-gray-500/20 text-gray-300" // Default case
-						}`}
-					>
-					{selectedOrder.status}
-					</span>
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedOrder.status === "delivered"
+                        ? "bg-green-500/20 text-green-300"
+                        : selectedOrder.status === "processing"
+                        ? "bg-yellow-500/20 text-yellow-300"
+                        : selectedOrder.status === "shipped"
+                        ? "bg-blue-500/20 text-blue-300"
+                        : selectedOrder.status === "pending"
+                        ? "bg-gray-500/20 text-gray-300"
+                        : selectedOrder.status === "canceled"
+                        ? "bg-red-500/20 text-red-300"
+                        : "bg-gray-500/20 text-gray-300" // Default case
+                      }`}
+                    >
+					            {selectedOrder.status}
+					          </span>
                   </span>
                   <select
                     value={selectedOrder.status}
@@ -309,7 +309,7 @@ const OrdersTable = () => {
                 </p>
                 <p className="flex items-center justify-between">
                   <span>
-                    <span className="font-semibold text-indigo-300">Payment:</span>
+                    <span className="font-semibold text-indigo-300">Ödəniş:</span>
                     <br />
                     <span
                       className={`${
@@ -326,12 +326,12 @@ const OrdersTable = () => {
                       onClick={() => markAsPaid(selectedOrder.id)}
                       className="ml-2 bg-green-600 text-white text-xs font-medium py-1 px-2 rounded hover:bg-green-700 transition-colors"
                     >
-                      Mark as Paid
+                      Ödənilib
                     </button>
                   )}
                 </p>
                 <p>
-                  <span className="font-semibold text-indigo-300">Date:</span>
+                  <span className="font-semibold text-indigo-300">Tarix:</span>
                   <br />
                   {new Date(selectedOrder.created_at).toLocaleString()}
                 </p>
@@ -340,7 +340,7 @@ const OrdersTable = () => {
               {/* Ordered Products */}
               <div className="mt-6">
                 <h4 className="text-lg font-semibold text-indigo-300 mb-3">
-                  Ordered Products
+                  Sifarişin Məhsullar
                 </h4>
                 <div className="space-y-4 max-h-40 overflow-y-auto pr-2">
                   {selectedOrder.order_items.map((item) => {
@@ -362,7 +362,7 @@ const OrdersTable = () => {
                             {product.name || "Loading..."}
                           </p>
                           <p className="text-xs text-gray-400">
-                            Qty: {item.quantity} | Unit Price: $
+                            Say: {item.quantity} | Vahid Qiymət: $
                             {product.price || item.price_at_purchase}
                           </p>
                         </div>
@@ -381,7 +381,7 @@ const OrdersTable = () => {
               onClick={closeModal}
               className="mt-6 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
             >
-              Close Details
+              Bağla
             </button>
           </motion.div>
         </motion.div>
