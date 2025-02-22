@@ -26,17 +26,20 @@ const OrdersPage = () => {
 				}
 				const data = await response.json();
 				setOrders(data);
-
+				
 				const totalOrders = data.length;
 				const pendingOrders = data.filter(order => order.status === "pending").length;
 				const completedOrders = data.filter(order => order.status === "completed").length;
-				const totalRevenue = ` ${31}`;
+				let totalRevenue = 0
+				data.forEach(order => {
+					totalRevenue += order.total_price
+				});
 
 				setOrderStats({
 					totalOrders: totalOrders.toString(),
 					pendingOrders: pendingOrders.toString(),
 					completedOrders: completedOrders.toString(),
-					totalRevenue: `$${totalRevenue.toLocaleString()}`,
+					totalRevenue: totalRevenue,
 				});
 			} catch (error) {
 				console.error("Error fetching orders:", error);
