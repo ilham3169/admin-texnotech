@@ -3,6 +3,8 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, Plus, Edit, Trash2, AlertTriangle, DollarSign, Package, TrendingUp, RefreshCcw } from 'lucide-react';
 import StatCard from "../common/StatCard";
+import { ToggleLeft, ToggleRight } from 'phosphor-react';
+
 
 
 const ProductsTable = () => {
@@ -555,6 +557,7 @@ const ProductsTable = () => {
       author_id: 1, // Static for now
       is_super: isSuperOffer,
       is_new: true,
+      is_active: true,
       price: parseInt(productPrice),
     };
 
@@ -746,11 +749,27 @@ const ProductsTable = () => {
                     >
                       <Edit size={18} />
                     </button>
-                    <button className="text-red-400 hover:text-red-300"
+
+                    {/* <button className="text-red-400 hover:text-red-300"
                       onClick={() => handleSelectDeleteProduct(product.id)}
                     >
                       <Trash2 size={18} />
+                    </button> */}
+
+                    <button
+                      className={`${
+                        product.isEnabled ? 'text-green-400 hover:text-green-300' : 'text-gray-400 hover:text-gray-300'
+                      }`}
+                      // onClick={() => handleToggleProduct(product.id)}
+                      title={product.isEnabled ? 'Disable Product' : 'Enable Product'}
+                    >
+                      {product.isEnabled ? (
+                        <ToggleLeft size={18} />
+                      ) : (
+                        <ToggleRight size={18} />
+                      )}
                     </button>
+
                   </td>
                 </motion.tr>
               )) : <></>}
