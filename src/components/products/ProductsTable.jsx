@@ -495,17 +495,47 @@ const ProductsTable = () => {
     setProductId(product.id)
   }
 
-  const handleSelectUpdateProductSpecifications= async (product_id) => {
-    axios
-      .get('https://texnotech.store/p_specification/values/' + product_id)
-      .then((response) => {
-        setProductSpecifications(response.data);
-        })
-        .catch((error) => {
-          console.error('Error fetching brands:', error);
-        });
-  } 
+  // const handleSelectUpdateProductSpecifications= async (product_id) => {
+  //   axios
+  //     .get('https://texnotech.store/p_specification/values/' + product_id)
+  //     .then((response) => {
+  //       setProductSpecifications(response.data);
+  //       })
+  //       .catch((error) => {
+  //         console.error('Error fetching brands:', error);
+  //       });
+  // } 
 
+  const handleSelectUpdateProductSpecifications = async (product_id) => {
+    try {
+      // Step 1: Fetch all possible specifications for the product's category
+      const product = filteredProducts.find(p => p.id === product_id);
+      const categoryId = product.category_id;
+  
+      const specsResponse = await axios.get(`https://texnotech.store/categories/values/${categoryId}`);
+      const allSpecifications = specsResponse.data;
+  
+      // Step 2: Fetch existing specification values for the product
+      const existingSpecsResponse = await axios.get(`https://texnotech.store/p_specification/values/${product_id}`);
+      const existingSpecs = existingSpecsResponse.data;
+  
+      // Step 3: Create a dictionary of specifications with existing values or empty strings
+      let specsDict = {};
+      allSpecifications.forEach(spec => {
+        const existingSpec = existingSpecs.find(es => es.id === spec.id);
+        specsDict[spec.id] = existingSpec ? existingSpec.value : ""; // Populate with value or empty string
+      });
+  
+      // Step 4: Set the specifications and dictionary for the modal
+      setProductSpecifications(allSpecifications);
+      setProductSpecificationsDict(specsDict);
+  
+      // Open the modal
+      setIsUpdateProductSpecificationsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching specifications for update:', error);
+    }
+  };
 
   const handleUpdateStatusProduct = async (product) => {
     
@@ -552,15 +582,13 @@ const ProductsTable = () => {
 
     try {
       const response = await axios.put(
-        'https://texnotech.store/products/' + updateProductId,
+        `https://texnotech.store/products/${updateProductId}`,
         productPayload
       );
-
-      setIsUpdateProductModalOpen(false)
-
-      handleSelectUpdateProductSpecifications(productId)
-
-      setIsUpdateProductSpecificationsModalOpen(true)
+  
+      setIsUpdateProductModalOpen(false);
+      await handleSelectUpdateProductSpecifications(productId); // Ensure this uses the updated function
+      setIsUpdateProductSpecificationsModalOpen(true);
     } catch (error) {
       console.error('Error updating product:', error);
     }
@@ -572,18 +600,18 @@ const ProductsTable = () => {
 
     const productPayload = {
       name: productName,
+      id: parseInt(productId),
       category_id: parseInt(productCategoryId),
       num_product: parseInt(productStock),
-      image_link: "createdfrompanel",
+      image_link: productImageLink,
       brend_id: parseInt(productBrandId),
       model_name: productModel,
       discount: parseInt(productDiscount),
       search_string: productKeywords,
-      author_id: 1, // Static for now
+      author_id: 1,
       is_super: isSuperOffer,
       is_new: true,
-      is_active: true,
-      price: parseInt(productPrice),
+      price: parseInt(productPrice)
     };
 
 
