@@ -506,6 +506,31 @@ const ProductsTable = () => {
         });
   } 
 
+
+  const handleUpdateStatusProduct = async (product) => {
+    
+    let is_active = null
+    if (product.is_active === true) {
+      is_active = false
+    } else {
+      is_active = true
+    }
+    
+    try {
+      const response = await axios.put(
+        'https://texnotech.store/products/' + product.id,
+        {
+          "is_active": is_active
+        }
+      );      
+    } catch (error) {
+      console.error('Error updating product:', error);
+    } finally {
+      handleProductsFetch()
+    }
+  }
+
+
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
 
@@ -758,12 +783,12 @@ const ProductsTable = () => {
 
                     <button
                       className={`${
-                        product.isEnabled ? 'text-green-400 hover:text-green-300' : 'text-gray-400 hover:text-gray-300'
+                        product.is_active ? 'text-green-400 hover:text-green-300' : 'text-gray-400 hover:text-gray-300'
                       }`}
-                      // onClick={() => handleToggleProduct(product.id)}
-                      title={product.isEnabled ? 'Disable Product' : 'Enable Product'}
+                      onClick={() => handleUpdateStatusProduct(product)}
+                      title={product.is_active ? 'Disable Product' : 'Enable Product'}
                     >
-                      {product.isEnabled ? (
+                      {product.is_active ? (
                         <ToggleLeft size={18} />
                       ) : (
                         <ToggleRight size={18} />
