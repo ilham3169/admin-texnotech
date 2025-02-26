@@ -322,10 +322,22 @@ const ProductsTable = () => {
         console.error('Error fetching brands:', error);
       });
 
-    handleProductsFetch()
+      handleProductsFetch();
 
   }, []);
   
+
+  const handleRefreshProducts = () => {
+    axios
+      .delete('https://texnotech.store/others/cache/clear')
+      .catch((error) => {
+        console.error('Error fetching categories:', error);
+      })
+      .finally(() => {
+        handleProductsFetch()
+      })
+  }
+
 
   const handleProductsFetch = () => {
     fetch('https://texnotech.store/products')
@@ -733,7 +745,7 @@ const ProductsTable = () => {
           </button>
 
           <button
-            onClick={handleProductsFetch}
+            onClick={handleRefreshProducts}
             className=" hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
             <RefreshCcw size={20} />
