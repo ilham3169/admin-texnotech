@@ -723,7 +723,7 @@ const ProductsTable = () => {
 
     filteredProducts.forEach((product) => {
       totalNumProducts += product.num_product
-      priceTotalProducts += product.price
+      priceTotalProducts += product.price * product.num_product
       if (product.is_new) {
         newNumProducts += 1
       }
@@ -853,14 +853,8 @@ const ProductsTable = () => {
                     <button className="text-indigo-400 hover:text-indigo-300 mr-2"
                       onClick={() => handleSelectUpdateProduct(product)}
                     >
-                      <Edit size={18} />
+                      <Edit size={28} />
                     </button>
-
-                    {/* <button className="text-red-400 hover:text-red-300"
-                      onClick={() => handleSelectDeleteProduct(product.id)}
-                    >
-                      <Trash2 size={18} />
-                    </button> */}
 
                     <button
                       className={`${
@@ -870,12 +864,11 @@ const ProductsTable = () => {
                       title={product.is_active ? 'Disable Product' : 'Enable Product'}
                     >
                       {product.is_active ? (
-                        <ToggleLeft size={18} />
+                        <ToggleLeft size={28} />
                       ) : (
-                        <ToggleRight size={18} />
+                        <ToggleRight size={28} />
                       )}
                     </button>
-
                   </td>
                 </motion.tr>
               )) : <></>}
