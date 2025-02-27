@@ -878,18 +878,27 @@ const ProductsTable = () => {
 
         {isModalOpen && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center z-50" // Changed to inset-0 for full page coverage
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsModalOpen(false)}
           >
             <motion.div
-              className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto absolute top-4" // Added absolute positioning and top-4
+              initial={{ y: -200, opacity: 0 }} // Start off-screen at the top
+              animate={{ y: 0, opacity: 1 }}   // Slide down into view
+              exit={{ y: -100, opacity: 0 }}   // Slide back up
+              transition={{ duration: 0.3 }}   // Smooth transition
               onClick={(e) => e.stopPropagation()}
             >
+            {/* <motion.div
+              className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.8, y: 100 }} // Added y: 100 for slide-up effect from bottom              animate={{ scale: 1 }}
+              animate={{ scale: 1, y: 0 }}    // Animate to y: 0
+              exit={{ scale: 0.8, y: 100 }}   // Exit back down
+              onClick={(e) => e.stopPropagation()}
+            > */}
               <h2 className="text-xl font-semibold text-gray-100 mb-4">
                 Məhsul əlavə et
               </h2>
