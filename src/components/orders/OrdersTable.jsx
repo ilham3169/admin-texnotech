@@ -330,7 +330,7 @@ const OrdersTable = () => {
                 <p>
                   <span className="font-semibold text-indigo-300">Cəmi:</span>
                   <br />
-                  <span className="text-green-400">${selectedOrder.total_price}</span>
+                  <span className="text-green-400">{selectedOrder.total_price} AZN</span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span>
@@ -351,7 +351,19 @@ const OrdersTable = () => {
                         : "bg-gray-500/20 text-gray-300" // Default case
                       }`}
                     >
-					            {selectedOrder.status}
+                      {
+                        selectedOrder.status === "delivered"
+                        ? "çatdırılmışdır"
+                        : selectedOrder.status === "processing"
+                        ? "davam edir"
+                        : selectedOrder.status === "shipped"
+                        ? "göndərildi"
+                        : selectedOrder.status === "pending"
+                        ? "gözləyir"
+                        : selectedOrder.status === "canceled"
+                        ? "ləğv edildi"
+                        : "none"
+                      }
 					          </span>
                   </span>
                   <select
@@ -361,7 +373,19 @@ const OrdersTable = () => {
                   >
                     {statusOptions.map((status) => (
                       <option key={status} value={status}>
-                        {status}
+                        {
+                        status === "delivered"
+                        ? "çatdırılmışdır"
+                        : status === "processing"
+                        ? "davam edir"
+                        : status === "shipped"
+                        ? "göndərildi"
+                        : status === "pending"
+                        ? "gözləyir"
+                        : status === "canceled"
+                        ? "ləğv edildi"
+                        : "none"
+                      }
                       </option>
                     ))}
                   </select>
@@ -377,7 +401,13 @@ const OrdersTable = () => {
                           : "text-green-400"
                       }`}
                     >
-                      {selectedOrder.payment_status} ({selectedOrder.payment_method})
+                      {selectedOrder.payment_status === "paid"
+                        ? "ödənilmişdir"
+                        : "ödənilməmişdir"}
+
+                      {selectedOrder.payment_method === "cash"
+                        ? " (nağd)"
+                        : " (kart)"}  
                     </span>
                   </span>
                   {selectedOrder.payment_status === "unpaid" && (
