@@ -219,7 +219,7 @@ const OrdersTable = () => {
                     {order.name} {order.surname}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
-                    ${order.total_price}
+                    {order.total_price} AZN
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     <span
@@ -237,7 +237,19 @@ const OrdersTable = () => {
                         : "bg-gray-100 text-gray-800" // Default case
                       }`}
                     >
-                      {order.status}
+                      {
+                        order.status === "delivered"
+                        ? "çatdırılmışdır"
+                        : order.status === "processing"
+                        ? "davam edir"
+                        : order.status === "shipped"
+                        ? "göndərildi"
+                        : order.status === "pending"
+                        ? "gözləyir"
+                        : order.status === "canceled"
+                        ? "ləğv edildi"
+                        : "none"
+                      }
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
@@ -248,7 +260,9 @@ const OrdersTable = () => {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {order.payment_status}
+                      {order.payment_status === "paid"
+                        ? "ödənilmişdir"
+                        : "ödənilməmişdir"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
