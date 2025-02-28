@@ -451,12 +451,12 @@ const OrdersTable = () => {
                             {product.name || "Loading..."}
                           </p>
                           <p className="text-xs text-gray-400">
-                            Say: {item.quantity} | Vahid Qiymət: ₼
-                            {product.price || item.price_at_purchase}
+                            Say: {item.quantity} | Vahid Qiymət: ₼ 
+                            { product.price || item.price_at_purchase}
                           </p>
                         </div>
                         <p className="text-sm text-green-400">
-                        ₼{(product.price || item.price_at_purchase) * item.quantity}
+                        ₼ { (product.price || item.price_at_purchase) * item.quantity}
                         </p>
                       </div>
                     );
