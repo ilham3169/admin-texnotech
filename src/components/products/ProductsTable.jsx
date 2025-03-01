@@ -41,7 +41,7 @@ const ProductRow = React.memo(({ product, categories, handleSelectUpdateProduct,
 const ProductsTable = () => {
   const modalRef = useRef(null);
 
-  // Consolidated state for modals and forms
+  // Consolidated state for modals, forms, and search
   const [state, setState] = useState({
     isBrandModalOpen: false,
     nameBrand: "",
@@ -86,7 +86,7 @@ const ProductsTable = () => {
 
   // Stats memoized
   const stats = useMemo(() => {
-    return state.products.reduce(
+    return state.filteredProducts.reduce(
       (acc, product) => {
         acc.totalNumProducts += product.num_product;
         acc.priceTotalProducts += product.price * product.num_product;
@@ -96,11 +96,11 @@ const ProductsTable = () => {
       },
       { totalNumProducts: 0, newNumProducts: 0, superNumProducts: 0, priceTotalProducts: 0 }
     );
-  }, [state.products]);
+  }, [state.filteredProducts]);
 
-  // Fetch initial data
+  // Fetch initial data (categories, brands, products, images)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
         const [categoriesRes, brandsRes, productsRes, imagesRes] = await Promise.all([
           axios.get('https://texnotech.store/categories'),
@@ -120,18 +120,41 @@ const ProductsTable = () => {
         console.error('Error fetching initial data:', error);
       }
     };
-    fetchData();
+    fetchInitialData();
   }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (state.searchTerm.length === 0) {
+        // If search term is empty, reset to all products
+        setState(prev => ({
+          ...prev,
+          filteredProducts: prev.products,
+        }));
+      } else {
+        // Fetch products based on search term
+        fetch(`https://texnotech.store/products?search_query=${state.searchTerm}`)
+          .then(response => response.json())
+          .then(data => {
+            setState(prev => ({
+              ...prev,
+              filteredProducts: data,
+            }));
+          })
+          .catch(error => console.error("Error fetching search results:", error));
+      }
+    }, 500); // 500ms debounce delay
+
+    return () => clearTimeout(handler); // Cleanup timeout on unmount or searchTerm change
+  }, [state.searchTerm, state.products]);
 
   // Memoized handlers
   const handleSearch = useCallback((e) => {
-    const term = e.target.value.toLowerCase();
+    const term = e.target.value;
     setState(prev => ({
       ...prev,
       searchTerm: term,
-      filteredProducts: prev.products.filter(
-        product => product.name.toLowerCase().includes(term) || product.category.toLowerCase().includes(term)
-      ),
     }));
   }, []);
 
@@ -139,7 +162,7 @@ const ProductsTable = () => {
     try {
       await axios.delete('https://texnotech.store/others/cache/clear');
       const response = await axios.get('https://texnotech.store/products');
-      setState(prev => ({ ...prev, products: response.data, filteredProducts: response.data }));
+      setState(prev => ({ ...prev, products: response.data, filteredProducts: response.data, searchTerm: "" }));
     } catch (error) {
       console.error('Error refreshing products:', error);
     }
@@ -280,39 +303,27 @@ const ProductsTable = () => {
     e.preventDefault();
     const entries = Object.entries(state.productSpecificationsDict);
     let hasError = false;
-  
+
     try {
-      // Fetch existing product specifications for the current product
-      console.log(`Trying to update product - ${state.updateProductId}`);
       const existingSpecsResponse = await axios.get(`https://texnotech.store/p_specification/values/${state.updateProductId}`);
       const existingSpecs = existingSpecsResponse.data || [];
-      console.log('Existing specs structure:', JSON.stringify(existingSpecs, null, 2));
-  
-      // Fetch all specifications for the product's category to map names to specification_ids
+
       const categorySpecsResponse = await axios.get(`https://texnotech.store/categories/values/${state.productCategoryId}`);
       const categorySpecs = categorySpecsResponse.data || [];
-      console.log('Category specs structure:', JSON.stringify(categorySpecs, null, 2));
-  
-      // Create a map of specification_id to name for easy lookup
+
       const specIdToNameMap = categorySpecs.reduce((acc, spec) => {
         acc[spec.id] = spec.name;
         return acc;
       }, {});
-  
+
       for (const [specificationId, value] of entries) {
-        if (value) { // Only update if there's a value
-          // Find the name of the specification using specificationId from state.productSpecificationsDict
+        if (value) {
           const specName = specIdToNameMap[parseInt(specificationId)];
-          if (!specName) {
-            console.warn(`No name found for specification_id ${specificationId}`);
-            continue;
-          }
-  
-          // Find the existing product_specification record for this product by matching the specification name
+          if (!specName) continue;
+
           const specRecord = existingSpecs.find(spec => spec.name === specName);
-  
-          if (specRecord && specRecord.id) { // If the record exists, use its p_specification_id
-            console.log(`Found existing spec for name ${specName}, p_spec_id: ${specRecord.id}`);
+
+          if (specRecord && specRecord.id) {
             const payload = { product_id: state.updateProductId, value };
             try {
               await axios.put(`https://texnotech.store/p_specification/${specRecord.id}`, payload);
@@ -321,8 +332,6 @@ const ProductsTable = () => {
               hasError = true;
             }
           } else {
-            console.log(`No existing spec found for name ${specName}, creating new one`);
-            // If no existing record is found, create a new one
             const specToCreate = categorySpecs.find(spec => spec.name === specName);
             if (specToCreate) {
               const payload = { 
@@ -336,14 +345,11 @@ const ProductsTable = () => {
                 console.error(`Error adding new specification ${specName}:`, error);
                 hasError = true;
               }
-            } else {
-              console.error(`Specification ${specName} not found in category specs`);
-              hasError = true;
             }
           }
         }
       }
-  
+
       if (!hasError) {
         setState(prev => ({ ...prev, isUpdateProductSpecificationsModalOpen: false }));
       }
