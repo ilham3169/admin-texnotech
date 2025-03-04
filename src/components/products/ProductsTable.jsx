@@ -43,6 +43,8 @@ const ProductsTable = () => {
 
   // Consolidated state for modals, forms, and search
   const [state, setState] = useState({
+    isCategoryModalOpen: false,
+    nameCategory: "",
     isBrandModalOpen: false,
     nameBrand: "",
     searchTerm: "",
@@ -247,6 +249,10 @@ const ProductsTable = () => {
 
   const handleAddBrandClick = useCallback(() => {
     setState(prev => ({ ...prev, nameBrand: "", isBrandModalOpen: true }));
+  }, []);
+
+  const handleAddCategoryClick = useCallback(() => {
+    setState(prev => ({ ...prev, nameCategory: "", isCategoryModalOpen: true }));
   }, []);
 
   const handleFileChange = useCallback((e) => {
@@ -494,6 +500,21 @@ const ProductsTable = () => {
     }
   }, [state.nameBrand]);
 
+  const handleAddCategory = useCallback(async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('https://texnotech.store/categories/add',
+        {
+          name: state.nameCategory,
+          is_active: true,
+          num_category: 0
+        });
+      setState(prev => ({ ...prev, isCategoryModalOpen: false }));
+    } catch (error) {
+      console.error('Error adding category:', error);
+    }
+  }, [state.nameCategory]);
+
   const handleAddProduct = useCallback(async (e) => {
     e.preventDefault();
     let productPayload = {
@@ -584,6 +605,14 @@ const ProductsTable = () => {
           >
             <Plus size={18} /> Brend əlavə et
           </button>
+
+          <button
+            onClick={handleAddCategoryClick}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
+          >
+            <Plus size={18} /> Kateqoriya
+          </button>
+
           <button
             onClick={handleRefreshProducts}
             className="hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
@@ -1106,6 +1135,57 @@ const ProductsTable = () => {
                       type="button"
                       className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
                       onClick={() => setState(prev => ({ ...prev, isBrandModalOpen: false }))}
+                      style={{ width: "100%" }}
+                    >
+                      Bağla
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
+                      style={{ width: "100%" }}
+                    >
+                      Bitir
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {state.isCategoryModalOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setState(prev => ({ ...prev, isCategoryModalOpen: false }))}
+          >
+            <motion.div
+              className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-semibold text-gray-100 mb-4">Kateqoriya əlavə et</h2>
+              <form onSubmit={handleAddCategory}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Kateqoriya adı</label>
+                    <input
+                      type="text"
+                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                      value={state.nameCategory}
+                      onChange={e => setState(prev => ({ ...prev, nameCategory: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-4">
+                    <button
+                      type="button"
+                      className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                      onClick={() => setState(prev => ({ ...prev, isCategoryModalOpen: false }))}
                       style={{ width: "100%" }}
                     >
                       Bağla
