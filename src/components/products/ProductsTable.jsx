@@ -43,6 +43,9 @@ const ProductsTable = () => {
 
   // Consolidated state for modals, forms, and search
   const [state, setState] = useState({
+    specifications: [{ name: "" }],
+    isAddSpecificationModalOpen: false,
+    specificationCategoryID: "",
     isCategoryModalOpen: false,
     nameCategory: "",
     isBrandModalOpen: false,
@@ -388,10 +391,6 @@ const ProductsTable = () => {
     }));
   }, []);
 
-  const handleSelectDeleteProduct = useCallback((product_id) => {
-    setState(prev => ({ ...prev, deleteProductId: product_id, isDeleteProductModalOpen: true }));
-  }, []);
-
   const handleDeleteProduct = useCallback(async (e) => {
     e.preventDefault();
     try {
@@ -503,13 +502,20 @@ const ProductsTable = () => {
   const handleAddCategory = useCallback(async (e) => {
     e.preventDefault();
     try {
-      await axios.post('https://texnotech.store/categories/add',
+      let created_category = await axios.post('https://texnotech.store/categories/add',
         {
           name: state.nameCategory,
           is_active: true,
           num_category: 0
         });
-      setState(prev => ({ ...prev, isCategoryModalOpen: false }));
+
+        setState(prev => (
+        {
+         ...prev, 
+         isCategoryModalOpen: false,
+         isAddSpecificationModalOpen: true,
+         specificationCategoryID: created_category.data.id
+        }));
     } catch (error) {
       console.error('Error adding category:', error);
     }
@@ -557,6 +563,31 @@ const ProductsTable = () => {
       console.error('Error adding product:', error);
     }
   }, [state, handleCategorySpecifications]);
+
+  const handleAddSpecification = useCallback(async (e) => {
+    e.preventDefault();
+
+    try {
+        const specificationPromises = state.specifications.map(spec => {
+            const specificationPayload = {
+                name: spec.name,
+                category_id: parseInt(state.specificationCategoryID)
+            };
+            return axios.post('https://texnotech.store/specifications/add', specificationPayload);
+        });
+
+        await Promise.all(specificationPromises);
+
+        setState(prev => ({
+            ...prev,
+            isAddSpecificationModalOpen: false,
+            specifications: [{ name: "" }]
+        }));
+
+    } catch (error) {
+        console.error('Error adding specifications:', error);
+    }
+}, [state])
 
   const handleCategoryChange = useCallback((e) => setState(prev => ({ ...prev, productCategoryId: e.target.value })), []);
   const handleBrandChange = useCallback((e) => setState(prev => ({ ...prev, productBrandId: e.target.value })), []);
@@ -1082,6 +1113,94 @@ const ProductsTable = () => {
           </motion.div>
         )}
 
+        {state.isAddSpecificationModalOpen && (
+            <motion.div
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setState(prev => ({ ...prev, isAddSpecificationModalOpen: false }))}
+            >
+                <motion.div
+                    className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.8 }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <h2 className="text-xl font-semibold text-gray-100 mb-4">Spesifikasiyalar</h2>
+                    <form onSubmit={handleAddSpecification}>
+                        <div className="space-y-4">
+                            {state.specifications.map((spec, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                          Spesifikasiyanın adı #{index + 1}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                                            value={spec.name}
+                                            onChange={(e) => {
+                                                const newSpecifications = [...state.specifications];
+                                                newSpecifications[index].name = e.target.value;
+                                                setState(prev => ({
+                                                    ...prev,
+                                                    specifications: newSpecifications
+                                                }));
+                                            }}
+                                            required
+                                        />
+                                    </div>
+                                    {state.specifications.length > 1 && (
+                                        <button
+                                            type="button"
+                                            className="text-red-400 hover:text-red-500 mt-6"
+                                            onClick={() => {
+                                                const newSpecifications = state.specifications.filter((_, i) => i !== index);
+                                                setState(prev => ({
+                                                    ...prev,
+                                                    specifications: newSpecifications
+                                                }));
+                                            }}
+                                        >
+                                            Sil
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                className="text-indigo-400 hover:text-indigo-500"
+                                onClick={() => {
+                                    setState(prev => ({
+                                        ...prev,
+                                        specifications: [...prev.specifications, { name: "" }]
+                                    }));
+                                }}
+                            >
+                                + Başqa Spesifikasiya əlavə et
+                            </button>
+                        </div>
+
+                        <div className="flex justify-end gap-4 mt-6">
+                            <button
+                                type="button"
+                                className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                                onClick={() => setState(prev => ({ ...prev, isAddSpecificationModalOpen: false }))}
+                            >
+                                Bağla
+                            </button>
+                            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded">
+                                Bitir
+                            </button>
+                        </div>
+                    </form>
+                </motion.div>
+            </motion.div>
+        )}
+
+
         {state.isImageModalOpen && (
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
@@ -1195,7 +1314,7 @@ const ProductsTable = () => {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded"
                       style={{ width: "100%" }}
                     >
-                      Bitir
+                      Növbəti
                     </button>
                   </div>
                 </div>
