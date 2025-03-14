@@ -5,7 +5,7 @@ import { Search, Plus, Edit, AlertTriangle, DollarSign, Package, TrendingUp, Ref
 import StatCard from "../common/StatCard";
 import { ToggleLeft, ToggleRight } from 'phosphor-react';
 
-// Memoized Product Row Component
+
 const ProductRow = React.memo(({ product, categories, handleSelectUpdateProduct, handleUpdateStatusProduct }) => (
   <motion.tr
     key={product.id}
@@ -45,6 +45,9 @@ const ProductsTable = () => {
   const [state, setState] = useState({
     specifications: [{ name: "" }],
     isAddSpecificationModalOpen: false,
+    isAddSpecificationSeparateModalOpen: false,
+    nameSpecificationSeparate: "",
+    idSpecificationCategorySeparate: "",
     specificationCategoryID: "",
     isCategoryModalOpen: false,
     nameCategory: "",
@@ -256,6 +259,10 @@ const ProductsTable = () => {
 
   const handleAddCategoryClick = useCallback(() => {
     setState(prev => ({ ...prev, nameCategory: "", isCategoryModalOpen: true }));
+  }, []);
+
+  const handleAddSpecificationSeparateClick = useCallback(() => {
+    setState(prev => ({...prev, isAddSpecificationSeparateModalOpen: true}));
   }, []);
 
   const handleFileChange = useCallback((e) => {
@@ -587,10 +594,37 @@ const ProductsTable = () => {
     } catch (error) {
         console.error('Error adding specifications:', error);
     }
-}, [state])
+  }, [state])
+
+  const handleAddSpecificationSeparate = useCallback(async (e) => {
+    e.preventDefault();
+
+    try {
+      const specificationData = {
+        name: state.nameSpecificationSeparate,
+        category_id: state.idSpecificationCategorySeparate,
+      }
+      console.log(specificationData)
+      const response = axios.post('https://texnotech.store/specifications/add', specificationData)
+
+      setState(prev => ({
+        ...prev,
+        isAddSpecificationSeparateModalOpen: false,
+        idSpecificationCategorySeparate: "",
+        nameSpecificationSeparate: "",
+      }));
+
+    } catch (error) {
+      console.error('Error creating the specification: ', error)
+    }
+  })
 
   const handleCategoryChange = useCallback((e) => setState(prev => ({ ...prev, productCategoryId: e.target.value })), []);
   const handleBrandChange = useCallback((e) => setState(prev => ({ ...prev, productBrandId: e.target.value })), []);
+  
+  const handleAddSpecificationSeparateCategory = useCallback(
+    (e) => setState(prev => ({...prev, idSpecificationCategorySeparate: e.target.value})),
+  [])
 
   return (
     <>
@@ -628,13 +662,13 @@ const ProductsTable = () => {
             onClick={handleAddProductClick}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
-            <Plus size={18} /> Məhsul əlavə et
+            <Plus size={18} /> Məhsul
           </button>
           <button
             onClick={handleAddBrandClick}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
-            <Plus size={18} /> Brend əlavə et
+            <Plus size={18} /> Brend
           </button>
 
           <button
@@ -642,6 +676,13 @@ const ProductsTable = () => {
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
           >
             <Plus size={18} /> Kateqoriya
+          </button>
+
+          <button
+            onClick={handleAddSpecificationSeparateClick}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex items-center gap-2"
+          >
+            <Plus size={18} /> Spesifikasiya
           </button>
 
           <button
@@ -1195,6 +1236,79 @@ const ProductsTable = () => {
                                 Bitir
                             </button>
                         </div>
+                    </form>
+                </motion.div>
+            </motion.div>
+        )}
+
+        
+        {state.isAddSpecificationSeparateModalOpen && (
+            <motion.div
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setState(prev => ({ ...prev, isAddSpecificationSeparateModalOpen: false }))}
+            >
+                <motion.div
+                    className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.8 }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <h2 className="text-xl font-semibold text-gray-100 mb-4">Spesifikasiya əlavə et</h2>
+                    <form onSubmit={handleAddSpecificationSeparate}>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Spesifikasiyanın adı
+                            </label>
+                            <input
+                              type="text"
+                              className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                              value={state.nameSpecificationSeparate}
+                              onChange={(e) => {
+                                setState(prev => ({
+                                  ...prev,
+                                  nameSpecificationSeparate: e.target.value
+                                }));
+                              }}
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">Kateqoriya</label>
+                            <select
+                              className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                              value={state.idSpecificationCategorySeparate}
+                              onChange={handleAddSpecificationSeparateCategory}
+                              required
+                            >
+                              <option value="">Select</option>
+                              {state.categories.filter(c => c.id > 17).map(category => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-4 mt-6">
+                        <button
+                          type="button"
+                          className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
+                          onClick={() => setState(prev => ({ ...prev, isAddSpecificationSeparateModalOpen: false }))}
+                        >
+                          Bağla
+                        </button>
+                        <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded">
+                          Bitir
+                        </button>
+                      </div>
                     </form>
                 </motion.div>
             </motion.div>
