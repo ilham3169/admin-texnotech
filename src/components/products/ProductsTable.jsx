@@ -43,6 +43,7 @@ const ProductsTable = () => {
 
   // Consolidated state for modals, forms, and search
   const [state, setState] = useState({
+    parentCategory: "",
     specifications: [{ name: "" }],
     isAddSpecificationModalOpen: false,
     isAddSpecificationSeparateModalOpen: false,
@@ -509,24 +510,26 @@ const ProductsTable = () => {
   const handleAddCategory = useCallback(async (e) => {
     e.preventDefault();
     try {
-      let created_category = await axios.post('https://texnotech.store/categories/add',
+      const created_category = await axios.post('https://texnotech.store/categories/child/add',
         {
           name: state.nameCategory,
           is_active: true,
-          num_category: 0
+          num_category: 0,
+          parent_category_id: state.parentCategory,
         });
-
-        setState(prev => (
+      console.log(created_category)
+      setState(prev => (
         {
-         ...prev, 
-         isCategoryModalOpen: false,
-         isAddSpecificationModalOpen: true,
-         specificationCategoryID: created_category.data.id
+          ...prev, 
+          isCategoryModalOpen: false,
+          isAddSpecificationModalOpen: true,
+          specificationCategoryID: created_category.data.id,
+          parentCategory: "",
         }));
     } catch (error) {
       console.error('Error adding category:', error);
-    }
-  }, [state.nameCategory]);
+    } 
+  }, [state.nameCategory, state.parentCategory]);
 
   const handleAddProduct = useCallback(async (e) => {
     e.preventDefault();
@@ -624,6 +627,10 @@ const ProductsTable = () => {
   
   const handleAddSpecificationSeparateCategory = useCallback(
     (e) => setState(prev => ({...prev, idSpecificationCategorySeparate: e.target.value})),
+  [])
+
+  const handleAddCategoryParentId = useCallback(
+    (e) => setState(prev => ({...prev, parentCategory: e.target.value})),
   [])
 
   return (
@@ -1414,6 +1421,22 @@ const ProductsTable = () => {
                       required
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Ana Kateqoriya</label>
+                    <select
+                      className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                      value={state.parentCategory}
+                      onChange={handleAddCategoryParentId}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {state.categories.filter(c => c.id > 17).map(category => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex justify-end gap-4">
                     <button
                       type="button"
