@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Search, Plus, Edit, AlertTriangle, DollarSign, Package, TrendingUp, RefreshCcw } from 'lucide-react';
+import { Search, Plus, Edit, AlertTriangle, DollarSign, Package, TrendingUp, RefreshCcw, XCircle } from 'lucide-react';
 import StatCard from "../common/StatCard";
 import { ToggleLeft, ToggleRight } from 'phosphor-react';
 
@@ -391,6 +391,7 @@ const ProductsTable = () => {
     if (!hasError) setState(prev => ({ ...prev, isNextModalIsOpen: false, isSuccessModalOpen: true }));
   }, [state.productSpecificationsDict, state.addedProductId]);
 
+
   const handleProductSpecificationInput = useCallback((value, id) => {
     setState(prev => ({
       ...prev,
@@ -398,6 +399,7 @@ const ProductsTable = () => {
       productSpecificationsDict: { ...prev.productSpecificationsDict, [id]: value },
     }));
   }, []);
+
 
   const handleDeleteProduct = useCallback(async (e) => {
     e.preventDefault();
@@ -517,8 +519,8 @@ const ProductsTable = () => {
           num_category: 0,
           parent_category_id: state.parentCategory,
         });
-      console.log(created_category)
-      setState(prev => (
+
+        setState(prev => (
         {
           ...prev, 
           isCategoryModalOpen: false,
@@ -530,6 +532,25 @@ const ProductsTable = () => {
       console.error('Error adding category:', error);
     } 
   }, [state.nameCategory, state.parentCategory]);
+
+  const handleDeleteProductSpecification = useCallback(async (e, spec_id) => {
+    e.preventDefault();
+    try {
+      await axios.delete(
+        `https://texnotech.store/p_specification/product/${state.updateProductId}/${spec_id}`,
+      );
+
+    } catch (error) {
+      if (error.status == 404){
+        console.error("Specification doesn't exist.")
+      }
+      else {
+        console.error('Error deleting specification:', error);
+      }
+      
+    } 
+  }, [state.updateProductId]);
+
 
   const handleAddProduct = useCallback(async (e) => {
     e.preventDefault();
@@ -1480,13 +1501,26 @@ const ProductsTable = () => {
                 <div className="grid grid-cols-2 gap-4">
                   {state.productSpecifications.map((spec, index) => (
                     <div className="mb-4" key={index}>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">{spec.name}</label>
-                      <input
-                        type="text"
-                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
-                        value={state.productSpecificationsDict[spec.id] || ""}
-                        onChange={e => handleProductSpecificationInput(e.target.value, spec.id)}
-                      />
+
+                      <label className="block text-sm font-medium text-gray-300 mb-1" >{spec.name}</label>
+
+                      <div style={{display: "flex", justifyContent: 'center', gap: "3%"}} className='mb-1'>
+                        <input
+                          type="text"
+                          className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                          value={state.productSpecificationsDict[spec.id] || ""}
+                          onChange={e => handleProductSpecificationInput(e.target.value, spec.id)}
+                        />
+                        <button 
+                          className="text-indigo-400 hover:text-indigo-300 mr-2" 
+                          style={{color: "red"}}
+                          onClick={(e) => handleDeleteProductSpecification(e, spec.id)}
+                          >
+                          <XCircle size={15} />
+                        </button>
+
+                      </div>
+                     
                     </div>
                   ))}
                   <div className="flex justify-end gap-4">
