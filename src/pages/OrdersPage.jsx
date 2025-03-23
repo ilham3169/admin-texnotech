@@ -20,7 +20,7 @@ const OrdersPage = () => {
 	useEffect(() => {
 		const fetchOrders = async () => {
 			try {
-				const response = await fetch("https://texnotech.store/orders");
+				const response = await fetch("https://back-texnotech.onrender.com/orders");
 				if (!response.ok) {
 					throw new Error("Network response was not ok");
 				}

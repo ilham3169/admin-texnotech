@@ -112,10 +112,10 @@ const ProductsTable = () => {
     const fetchInitialData = async () => {
       try {
         const [categoriesRes, brandsRes, productsRes, imagesRes] = await Promise.all([
-          axios.get('https://texnotech.store/categories'),
-          axios.get('https://texnotech.store/brands'),
-          axios.get('https://texnotech.store/products'),
-          axios.get('https://texnotech.store/images'),
+          axios.get('https://back-texnotech.onrender.com/categories'),
+          axios.get('https://back-texnotech.onrender.com/brands'),
+          axios.get('https://back-texnotech.onrender.com/products'),
+          axios.get('https://back-texnotech.onrender.com/images'),
         ]);
         setState(prev => ({
           ...prev,
@@ -143,7 +143,7 @@ const ProductsTable = () => {
         }));
       } else {
         // Fetch products based on search term
-        fetch(`https://texnotech.store/products?search_query=${state.searchTerm}`)
+        fetch(`https://back-texnotech.onrender.com/products?search_query=${state.searchTerm}`)
           .then(response => response.json())
           .then(data => {
             setState(prev => ({
@@ -169,8 +169,8 @@ const ProductsTable = () => {
 
   const handleRefreshProducts = useCallback(async () => {
     try {
-      await axios.delete('https://texnotech.store/others/cache/clear');
-      const response = await axios.get('https://texnotech.store/products');
+      await axios.delete('https://back-texnotech.onrender.com/others/cache/clear');
+      const response = await axios.get('https://back-texnotech.onrender.com/products');
       setState(prev => ({ ...prev, products: response.data, filteredProducts: response.data, searchTerm: "" }));
     } catch (error) {
       console.error('Error refreshing products:', error);
@@ -181,11 +181,11 @@ const ProductsTable = () => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const uploadResponse = await fetch("https://texnotech.store/files", { method: "POST", body: formData });
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
       if (!uploadResponse.ok) throw new Error("Image upload failed.");
       const imageLink = await uploadResponse.json();
       const imagePayload = { image_link: imageLink };
-      const dbResponse = await fetch(`https://texnotech.store/products/${productId}`, {
+      const dbResponse = await fetch(`https://back-texnotech.onrender.com/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(imagePayload),
@@ -201,11 +201,11 @@ const ProductsTable = () => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const uploadResponse = await fetch("https://texnotech.store/files", { method: "POST", body: formData });
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
       if (!uploadResponse.ok) throw new Error("Image upload failed.");
       const imageLink = await uploadResponse.json();
       const imagePayload = { image_link: imageLink, product_id: productId };
-      const dbResponse = await fetch("https://texnotech.store/images/add", {
+      const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(imagePayload),
@@ -219,7 +219,7 @@ const ProductsTable = () => {
 
   const handleDeleteExtraImage = useCallback(async (id) => {
     try {
-      const response = await fetch(`https://texnotech.store/images/${id}`, {
+      const response = await fetch(`https://back-texnotech.onrender.com/images/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_id: id }),
@@ -281,11 +281,11 @@ const ProductsTable = () => {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const response = await fetch("https://texnotech.store/files", { method: "POST", body: formData });
+        const response = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
         if (!response.ok) throw new Error(`Upload failed for ${file.name}`);
         const result = await response.json();
         const imagePayload = { image_link: result, product_id: state.addedProductId };
-        const dbResponse = await fetch("https://texnotech.store/images/add", {
+        const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(imagePayload),
@@ -307,7 +307,7 @@ const ProductsTable = () => {
 
   const handleCategorySpecifications = useCallback(async () => {
     try {
-      const response = await axios.get(`https://texnotech.store/categories/values/${state.productCategoryId}`);
+      const response = await axios.get(`https://back-texnotech.onrender.com/categories/values/${state.productCategoryId}`);
       const specs = response.data;
       const newDict = specs.reduce((acc, item) => ({ ...acc, [item.id]: "" }), {});
       setState(prev => ({ ...prev, productSpecifications: specs, productSpecificationsDict: newDict }));
@@ -322,10 +322,10 @@ const ProductsTable = () => {
     let hasError = false;
 
     try {
-      const existingSpecsResponse = await axios.get(`https://texnotech.store/p_specification/values/${state.updateProductId}`);
+      const existingSpecsResponse = await axios.get(`https://back-texnotech.onrender.com/p_specification/values/${state.updateProductId}`);
       const existingSpecs = existingSpecsResponse.data || [];
 
-      const categorySpecsResponse = await axios.get(`https://texnotech.store/categories/values/${state.productCategoryId}`);
+      const categorySpecsResponse = await axios.get(`https://back-texnotech.onrender.com/categories/values/${state.productCategoryId}`);
       const categorySpecs = categorySpecsResponse.data || [];
 
       const specIdToNameMap = categorySpecs.reduce((acc, spec) => {
@@ -343,7 +343,7 @@ const ProductsTable = () => {
           if (specRecord && specRecord.id) {
             const payload = { product_id: state.updateProductId, value };
             try {
-              await axios.put(`https://texnotech.store/p_specification/${specRecord.id}`, payload);
+              await axios.put(`https://back-texnotech.onrender.com/p_specification/${specRecord.id}`, payload);
             } catch (error) {
               console.error(`Error updating specification ${specName}:`, error);
               hasError = true;
@@ -357,7 +357,7 @@ const ProductsTable = () => {
                 value 
               };
               try {
-                await axios.post('https://texnotech.store/p_specification', payload);
+                await axios.post('https://back-texnotech.onrender.com/p_specification', payload);
               } catch (error) {
                 console.error(`Error adding new specification ${specName}:`, error);
                 hasError = true;
@@ -382,7 +382,7 @@ const ProductsTable = () => {
     let hasError = false;
     const requests = entries.map(([id, value]) => {
       const payload = { product_id: state.addedProductId, specification_id: id, value };
-      return axios.post('https://texnotech.store/p_specification', payload).catch(error => {
+      return axios.post('https://back-texnotech.onrender.com/p_specification', payload).catch(error => {
         console.error('Error adding specification:', error);
         hasError = true;
       });
@@ -404,7 +404,7 @@ const ProductsTable = () => {
   const handleDeleteProduct = useCallback(async (e) => {
     e.preventDefault();
     try {
-      await axios.delete(`https://texnotech.store/products/${state.deleteProductId}`);
+      await axios.delete(`https://back-texnotech.onrender.com/products/${state.deleteProductId}`);
       setState(prev => ({
         ...prev,
         products: prev.products.filter(p => p.id !== state.deleteProductId),
@@ -439,8 +439,8 @@ const ProductsTable = () => {
     try {
       const product = state.filteredProducts.find(p => p.id === product_id);
       const [specsRes, existingSpecsRes] = await Promise.all([
-        axios.get(`https://texnotech.store/categories/values/${product.category_id}`),
-        axios.get(`https://texnotech.store/p_specification/values/${product_id}`),
+        axios.get(`https://back-texnotech.onrender.com/categories/values/${product.category_id}`),
+        axios.get(`https://back-texnotech.onrender.com/p_specification/values/${product_id}`),
       ]);
       const allSpecs = specsRes.data;
       const existingSpecs = existingSpecsRes.data;
@@ -462,7 +462,7 @@ const ProductsTable = () => {
   const handleUpdateStatusProduct = useCallback(async (product) => {
     const is_active = !product.is_active;
     try {
-      await axios.put(`https://texnotech.store/products/${product.id}`, { is_active });
+      await axios.put(`https://back-texnotech.onrender.com/products/${product.id}`, { is_active });
       setState(prev => ({
         ...prev,
         products: prev.products.map(p => p.id === product.id ? { ...p, is_active } : p),
@@ -491,7 +491,7 @@ const ProductsTable = () => {
       price: parseInt(state.productPrice),
     };
     try {
-      await axios.put(`https://texnotech.store/products/${state.updateProductId}`, payload);
+      await axios.put(`https://back-texnotech.onrender.com/products/${state.updateProductId}`, payload);
       setState(prev => ({ ...prev, isUpdateProductModalOpen: false }));
       await handleSelectUpdateProductSpecifications(state.productId);
     } catch (error) {
@@ -502,7 +502,7 @@ const ProductsTable = () => {
   const handleAddBrand = useCallback(async (e) => {
     e.preventDefault();
     try {
-      await axios.post('https://texnotech.store/brands/add', { name: state.nameBrand });
+      await axios.post('https://back-texnotech.onrender.com/brands/add', { name: state.nameBrand });
       setState(prev => ({ ...prev, isBrandModalOpen: false }));
     } catch (error) {
       console.error('Error adding brand:', error);
@@ -512,7 +512,7 @@ const ProductsTable = () => {
   const handleAddCategory = useCallback(async (e) => {
     e.preventDefault();
     try {
-      const created_category = await axios.post('https://texnotech.store/categories/child/add',
+      const created_category = await axios.post('https://back-texnotech.onrender.com/categories/child/add',
         {
           name: state.nameCategory,
           is_active: true,
@@ -537,7 +537,7 @@ const ProductsTable = () => {
     e.preventDefault();
     try {
       await axios.delete(
-        `https://texnotech.store/p_specification/product/${state.updateProductId}/${spec_id}`,
+        `https://back-texnotech.onrender.com/p_specification/product/${state.updateProductId}/${spec_id}`,
       );
 
     } catch (error) {
@@ -573,7 +573,7 @@ const ProductsTable = () => {
       const formData = new FormData();
       formData.append("file", state.uploadedFile);
       try {
-        const response = await fetch("https://texnotech.store/files", { method: "POST", body: formData });
+        const response = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
         if (!response.ok) throw new Error("File upload failed");
         productPayload.image_link = await response.json();
       } catch (error) {
@@ -581,7 +581,7 @@ const ProductsTable = () => {
       }
     }
     try {
-      const response = await axios.post('https://texnotech.store/products/add', productPayload);
+      const response = await axios.post('https://back-texnotech.onrender.com/products/add', productPayload);
       setState(prev => ({
         ...prev,
         addedProductId: response.data.id,
@@ -604,7 +604,7 @@ const ProductsTable = () => {
                 name: spec.name,
                 category_id: parseInt(state.specificationCategoryID)
             };
-            return axios.post('https://texnotech.store/specifications/add', specificationPayload);
+            return axios.post('https://back-texnotech.onrender.com/specifications/add', specificationPayload);
         });
 
         await Promise.all(specificationPromises);
@@ -629,7 +629,7 @@ const ProductsTable = () => {
         category_id: state.idSpecificationCategorySeparate,
       }
       console.log(specificationData)
-      const response = axios.post('https://texnotech.store/specifications/add', specificationData)
+      const response = axios.post('https://back-texnotech.onrender.com/specifications/add', specificationData)
 
       setState(prev => ({
         ...prev,

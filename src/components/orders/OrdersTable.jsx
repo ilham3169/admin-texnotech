@@ -18,7 +18,7 @@ const OrdersTable = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch("https://texnotech.store/orders");
+      const response = await fetch("https://back-texnotech.onrender.com/orders");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       setOrders(data);
@@ -38,7 +38,7 @@ const OrdersTable = () => {
     await Promise.all(
       selectedOrder.order_items.map(async (item) => {
         try {
-          const response = await fetch(`https://texnotech.store/products/${item.product_id}`);
+          const response = await fetch(`https://back-texnotech.onrender.com/products/${item.product_id}`);
           if (!response.ok) throw new Error(`Failed to fetch product ${item.product_id}`);
           const productData = await response.json();
           details[item.product_id] = productData;
@@ -79,7 +79,7 @@ const OrdersTable = () => {
 
   const markAsPaid = async (orderId) => {
     try {
-      const response = await fetch(`https://texnotech.store/orders/${orderId}/payment`, {
+      const response = await fetch(`https://back-texnotech.onrender.com/orders/${orderId}/payment`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +101,7 @@ const OrdersTable = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
 	try {
-	  const response = await fetch(`https://texnotech.store/orders/${orderId}/status`, {
+	  const response = await fetch(`https://back-texnotech.onrender.com/orders/${orderId}/status`, {
 		method: "PATCH",
 		headers: {
 		  "Content-Type": "application/json",
@@ -131,7 +131,7 @@ const OrdersTable = () => {
     
     try {
       const response = await axios.delete(
-        `https://texnotech.store/orders/${deleteOrderId}`,
+        `https://back-texnotech.onrender.com/orders/${deleteOrderId}`,
         {
           headers: {
             'Content-Type': 'application/json', 
