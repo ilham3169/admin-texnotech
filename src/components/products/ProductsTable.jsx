@@ -25,19 +25,22 @@ const ProductsTable = () => {
     isAddCategoryModalOpen: false,
     isAddSpecificationModalOpen: false,
     isAddBrandModalOpen: false,
+    isAddProductSuccessModalOpen: false,
+    isUpdateProductSpecificationsModalOpen: false,
+    isUpdateProductModalOpen: false,
 
+    // Utils
     searchTerm: "",
-
+    
+    // Retrieved data
     products: [],
     filteredProducts: [],
-
     categories: [],
-
     brands: [],
 
-    // Update product variables
+    // Create/Update product variables
     updateProductId: null,
-    isUpdateProductModalOpen: false,
+    addedProductId: null,
     productName: "",
     productCategoryId: null,
     productStock: null,
@@ -49,64 +52,79 @@ const ProductsTable = () => {
     isSuperOffer: null,
     productPrice: null,
     productId: null,
-
-    extraImages: [],
-
-    addedProductId: null,
     productSpecifications: [],
     productSpecificationsDict: {},
-    isUpdateProductSpecificationsModalOpen: false,
-    isAddProductSuccessModalOpen: false,
-
+    specificationValues: {},
+    
+    // Image variables
+    extraImages: [],
     uploadedFiles: [],
     uploadStatus: {},
     isUploadComplete: false,
 
-    specificationValues: {},
-
   });
+
+
+  // Fetch products, brands, categories
+  const fetchInitialData = async () => {
+    try {
+      const [categoriesRes, brandsRes, productsRes] = await Promise.all([
+        axios.get('https://back-texnotech.onrender.com/categories'),
+        axios.get('https://back-texnotech.onrender.com/brands'),
+        axios.get('https://back-texnotech.onrender.com/products'),
+      ]);
+      
+      // Store data in variables
+      setState(prev => ({
+        ...prev,
+        categories: categoriesRes.data.sort((a, b) => a.name.localeCompare(b.name)),
+        brands: brandsRes.data.sort((a, b) => a.name.localeCompare(b.name)),
+        products: productsRes.data,
+        filteredProducts: productsRes.data,
+      }));
+    
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+    }
+  };
 
   // Fetch initial data
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const [categoriesRes, brandsRes, productsRes] = await Promise.all([
-          axios.get('https://back-texnotech.onrender.com/categories'),
-          axios.get('https://back-texnotech.onrender.com/brands'),
-          axios.get('https://back-texnotech.onrender.com/products'),
-        ]);
-        setState(prev => ({
-          ...prev,
-          categories: categoriesRes.data.sort((a, b) => a.name.localeCompare(b.name)),
-          brands: brandsRes.data.sort((a, b) => a.name.localeCompare(b.name)),
-          products: productsRes.data,
-          filteredProducts: productsRes.data,
-        }));
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
-      }
-    };
+    
     fetchInitialData();
+  
   }, []);
 
+  // Search results
   useEffect(() => {
+
     const filtered = state.products.filter(product =>
       product.name.toLowerCase().includes(state.searchTerm.toLowerCase())
     );
     setState(prev => ({ ...prev, filteredProducts: filtered }));
+  
   }, [state.searchTerm, state.products]);
 
 
-  // Handlers for Add Product Modal
+  // ---- Handlers for Add Product Modal
+
+  // Open Add Product modal
   const handleOpenAddProductModal = useCallback(() => {
+  
     setState(prev => ({ ...prev, isAddProductModalOpen: true }));
+  
   }, []);
 
+  // Close Add Product modal
   const handleCloseAddProductModal = useCallback(() => {
+  
     setState(prev => ({ ...prev, isAddProductModalOpen: false , isAddProductSpecificationsModalOpen: true}));
+  
   }, []);
 
+  // Triggered when product added successfully
   const handleProductAdded = useCallback(async (newProduct) => {
+    
     setState(prev => ({
       ...prev,
       products: [...prev.products, newProduct],
@@ -115,9 +133,12 @@ const ProductsTable = () => {
       productCategoryId: newProduct.category_id,
     }));
 
+    // Open Add Product Specifications Modal
     await handleCategorySpecifications();
+  
   }, []);
 
+  // Add Product Specifications API call
   const handleAddProductSpecifications = useCallback(async (e) => {
     e.preventDefault();
     
@@ -139,6 +160,7 @@ const ProductsTable = () => {
   
   }, [state.productSpecificationsDict, state.addedProductId]);
 
+  // Retrieve Product's category specifications
   const handleCategorySpecifications = useCallback(async () => {
     try {
       const response = await axios.get(`https://back-texnotech.onrender.com/categories/values/${state.productCategoryId}`);
@@ -153,24 +175,35 @@ const ProductsTable = () => {
     }
   }, [state.productCategoryId]);
 
-  // Handlers for Add Specification Modal
+  // ---- Handlers for Add Specification Modal
+
+  // Open Add Specification Modal
   const handleOpenAddSpecificationModal = useCallback(() => {
+ 
     setState(prev => ({ ...prev, isAddSpecificationModalOpen: true }));
+ 
   }, []);
 
+  // Close Add Specification Modal
   const handleCloseAddSpecificationModal = useCallback(() => {
+    
     setState(prev => ({ ...prev, isAddSpecificationModalOpen: false }));
+  
   }, []);
 
-  // Handle for Add Brand Modal
+  // ---- Handle for Add Brand Modal
+  
+  // Open Add Brand Modal
   const handleOpenAddBrandModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddBrandModalOpen: true }));
   }, []);
 
+  // Close Add Brand Modal 
   const handleCloseAddBrandModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddBrandModalOpen: false }))
   }, [])
   
+  // Triggered when brand created successfully
   const handleBrandAdded = useCallback((newBrand) => {
     setState(prev => ({
       ...prev,
@@ -178,8 +211,12 @@ const ProductsTable = () => {
     }))
   }, [])
 
+
+  // ---- Handlers for Update Product Modal
+
+  // Retrieve Product's existing Specifications
   const handleSelectUpdateProductSpecifications = useCallback(async (product_id) => {
-    
+  
     try {
       
       const product = state.filteredProducts.find(p => p.id === product_id);
@@ -209,9 +246,10 @@ const ProductsTable = () => {
 
   }, [state.filteredProducts]);
 
-  // Handlers for Update Product Modal
+  // Select A Product to Update
   const handleSelectUpdateProduct = useCallback((product) => {
 
+    // Fill out variables
     setState(prev => ({
       ...prev,
       updateProductId: product.id,
@@ -230,8 +268,10 @@ const ProductsTable = () => {
     }));
   }, []);
   
+  // Activate/Deactivate Product(Status)
   const   handleUpdateStatusProduct = useCallback(async (product) => {
     const is_active = !product.is_active;
+    
     try {
       await axios.put(`https://back-texnotech.onrender.com/products/${product.id}`, { is_active });
       setState(prev => ({
@@ -239,11 +279,14 @@ const ProductsTable = () => {
         products: prev.products.map(p => p.id === product.id ? { ...p, is_active } : p),
         filteredProducts: prev.filteredProducts.map(p => p.id === product.id ? { ...p, is_active } : p),
       }));
+    
     } catch (error) {
       console.error('Error updating product status:', error);
     }
+  
   }, []);
 
+  // Update Product API Call
   const handleUpdateProduct = useCallback(async (e) => {
     e.preventDefault();
 
@@ -277,92 +320,7 @@ const ProductsTable = () => {
 
   }, [state, handleSelectUpdateProductSpecifications]);
 
-  const handleCategoryChange = useCallback((e) => setState(prev => ({ ...prev, productCategoryId: e.target.value })), []);
-  const handleBrandChange = useCallback((e) => setState(prev => ({ ...prev, productBrandId: e.target.value })), []);
-
-  const uploadMainImage = useCallback(async (file, productId) => {
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-
-      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
-      
-      if (!uploadResponse.ok) throw new Error("Image upload failed.");
-      
-      const imageLink = await uploadResponse.json();
-      const imagePayload = { image_link: imageLink };
-      
-      const dbResponse = await fetch(`https://back-texnotech.onrender.com/products/${productId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(imagePayload),
-      });
-
-      if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
-      
-      setState(prev => ({ ...prev, productImageLink: imageLink }));
-
-    } catch (error) {
-      console.error("Error uploading main image:", error);
-    }
-
-  }, []);
-
-  const uploadAndAddImage = useCallback(async (file, productId) => {
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      
-      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
-      
-      if (!uploadResponse.ok) throw new Error("Image upload failed.");
-      
-      const imageLink = await uploadResponse.json();
-      const imagePayload = { image_link: imageLink, product_id: productId };
-      
-      const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(imagePayload),
-      });
-      
-      if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
-      
-      setState(prev => ({ ...prev, extraImages: [...prev.extraImages, { image_link: imageLink, product_id: productId }] }));
-    
-    } catch (error) {
-      console.error("Error uploading extra image:", error);
-    }
-
-  }, []);
-
-  const handleDeleteExtraImage = useCallback(async (id) => {
-
-    try {
-
-      const response = await fetch(`https://back-texnotech.onrender.com/images/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_id: id }),
-      });
-
-      if (response.ok) {
-        setState(prev => ({
-          ...prev,
-          extraImages: prev.extraImages.filter(image => image.id !== id),
-        }));
-      }
-
-    } catch (error) {
-      console.error('Error deleting image:', error);
-    }
-
-  }, []);
-
+  // Assign Product Specification id to the value
   const handleProductSpecificationInput = useCallback((value, id) => {
     
     setState(prev => ({
@@ -373,6 +331,7 @@ const ProductsTable = () => {
 
   }, []);
 
+  // Delete Product's Specification
   const handleDeleteProductSpecification = useCallback(async (e, spec_id) => {
     e.preventDefault();
     
@@ -392,6 +351,7 @@ const ProductsTable = () => {
 
   }, [state.updateProductId]);
 
+  // Update Product's Specification
   const handleUpdateProductSpecifications = useCallback(async (e) => {
     e.preventDefault();
     
@@ -465,16 +425,125 @@ const ProductsTable = () => {
 
   }, [state.productSpecificationsDict, state.updateProductId, state.productCategoryId]);
 
+  // Select Product's Category
+  const handleCategoryChange = useCallback((e) => setState(prev => ({ ...prev, productCategoryId: e.target.value })), []);
+  
+  // Select Product's Brand
+  const handleBrandChange = useCallback((e) => setState(prev => ({ ...prev, productBrandId: e.target.value })), []);
 
-  // Handlers for Add Category Modal
+
+  // ---- Handlers for Images
+
+  // Update Product's Image
+  const uploadMainImage = useCallback(async (file, productId) => {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+
+      // Upload image
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
+      
+      if (!uploadResponse.ok) throw new Error("Image upload failed.");
+      
+      const imageLink = await uploadResponse.json();
+      const imagePayload = { image_link: imageLink };
+      
+      // Update Product's image
+      const dbResponse = await fetch(`https://back-texnotech.onrender.com/products/${productId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(imagePayload),
+      });
+
+      if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
+      
+      setState(prev => ({ ...prev, productImageLink: imageLink }));
+
+    } catch (error) {
+      console.error("Error uploading main image:", error);
+    }
+
+  }, []);
+
+  // Set Product's Image
+  const uploadAndAddImage = useCallback(async (file, productId) => {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      
+      // Upload image
+      const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
+      
+      if (!uploadResponse.ok) throw new Error("Image upload failed.");
+      
+      const imageLink = await uploadResponse.json();
+      const imagePayload = { image_link: imageLink, product_id: productId };
+      
+      // Update Product's image
+      const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(imagePayload),
+      });
+      
+      if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
+      
+      setState(prev => ({ ...prev, extraImages: [...prev.extraImages, { image_link: imageLink, product_id: productId }] }));
+    
+    } catch (error) {
+      console.error("Error uploading extra image:", error);
+    }
+
+  }, []);
+
+  // Delete Product's extra Image
+  const handleDeleteExtraImage = useCallback(async (id) => {
+
+    try {
+
+      const response = await fetch(`https://back-texnotech.onrender.com/images/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_id: id }),
+      });
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          extraImages: prev.extraImages.filter(image => image.id !== id),
+        }));
+      }
+
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+
+  }, []);
+
+  // Change uploaded Image
+  const handleFileChange = useCallback((e) => {
+    const files = Array.from(e.target.files);
+    setState(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...files] }));
+  }, []);
+
+
+  // ---- Handlers for Add Category Modal
+
+  // Open Add Category Modal 
   const handleOpenAddCategoryModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddCategoryModalOpen: true }));
   }, []);
 
+  // Close Add Category Modal
   const handleCloseAddCategoryModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddCategoryModalOpen: false }));
   }, []);
 
+  // Triggered when Category is successfully created
   const handleCategoryAdded = useCallback((newCategory) => {
     setState(prev => ({
       ...prev,
@@ -483,7 +552,9 @@ const ProductsTable = () => {
   }, []);
 
 
-  // Placeholder handlers (replace with your logic
+  // ---- Handlers for UTILS
+
+  // Search a Product
   const handleSearch = useCallback((e) => {
     const term = e.target.value;
     setState(prev => ({
@@ -492,6 +563,7 @@ const ProductsTable = () => {
     }));
   }, []);
 
+  // Refresh Products
   const handleRefreshProducts = useCallback(async () => {
     try {
 
@@ -505,10 +577,6 @@ const ProductsTable = () => {
 
   }, []);
 
-  const handleFileChange = useCallback((e) => {
-    const files = Array.from(e.target.files);
-    setState(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...files] }));
-  }, []);
 
   return (
     <motion.div
@@ -568,6 +636,7 @@ const ProductsTable = () => {
         onBrandAdded={handleBrandAdded}
       />
 
+      {/* Table content */}
       <ProductTableContent
         products={state.filteredProducts}
         categories={state.categories}
