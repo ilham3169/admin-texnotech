@@ -1,9 +1,4 @@
-import { motion } from "framer-motion";
-
 import Header from "../components/common/Header";
-
-import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
-import SalesTrendChart from "../components/products/SalesTrendChart";
 import ProductsTable from "../components/products/ProductsTable";
 
 const ProductsPage = () => {
