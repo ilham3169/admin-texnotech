@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Search, Plus, RefreshCcw } from 'lucide-react';
+import { Search, Plus, RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import AddProductModal from "./modals/AddProductModal.jsx";
 import AddCategoryModal from './modals/AddCategoryModal.jsx'; 
@@ -12,14 +12,11 @@ import AddProductSpecificationsModal from "./modals/AddProductSpecificationsModa
 import UpdateProductModal from "./modals/UpdateProductModal.jsx";
 import UpdateProductSpecificationsModal from "./modals/UpdateProductSpecificationsModal.jsx";
 
-import ProductTableContent from './ProductTableContent.jsx'
+import ProductTableContent from './ProductTableContent.jsx';
 import ProductTableHeader from "./ProductTableHeader.jsx";
 
-
 const ProductsTable = () => {
-
   const [state, setState] = useState({
-    // Modals' status variables
     isAddProductModalOpen: false,
     isAddProductSpecificationsModalOpen: false,
     isAddCategoryModalOpen: false,
@@ -28,17 +25,10 @@ const ProductsTable = () => {
     isAddProductSuccessModalOpen: false,
     isUpdateProductSpecificationsModalOpen: false,
     isUpdateProductModalOpen: false,
-
-    // Utils
     searchTerm: "",
-    
-    // Retrieved data
     products: [],
-    filteredProducts: [],
     categories: [],
     brands: [],
-
-    // Create/Update product variables
     updateProductId: null,
     addedProductId: null,
     productName: "",
@@ -55,99 +45,150 @@ const ProductsTable = () => {
     productSpecifications: [],
     productSpecificationsDict: {},
     specificationValues: {},
-    
-    // Image variables
     extraImages: [],
     uploadedFiles: [],
     uploadStatus: {},
     isUploadComplete: false,
-
+    currentPage: 1,
+    itemsPerPage: 10,
+    itemsPerPageOptions: [5, 10, 20, 50],
+    totalPages: 1, // Will be calculated from total products
+    totalItems: 0, // Fetched from /num-products
   });
 
+  const fetchTotalProducts = async () => {
+    try {
+      const response = await axios.get('https://back-texnotech.onrender.com/products/num-products');
+      const totalItems = response.data.num_products || response.data.count || response.data; // Adjust based on response structure
+      return totalItems;
+    } catch (error) {
+      console.error('Error fetching total products:', error);
+      return 0;
+    }
+  };
 
-  // Fetch products, brands, categories
   const fetchInitialData = async () => {
     try {
-      const [categoriesRes, brandsRes, productsRes] = await Promise.all([
+      const [categoriesRes, brandsRes, productsRes, totalItems] = await Promise.all([
         axios.get('https://back-texnotech.onrender.com/categories'),
         axios.get('https://back-texnotech.onrender.com/brands'),
-        axios.get('https://back-texnotech.onrender.com/products'),
+        axios.get(`https://back-texnotech.onrender.com/products?page=${state.currentPage}&page_size=${state.itemsPerPage}`),
+        fetchTotalProducts(),
       ]);
-      
-      // Store data in variables
+
+      console.log('Products Response:', productsRes.data);
+      console.log('Total Items:', totalItems);
+
+      const productsData = Array.isArray(productsRes.data) ? productsRes.data : productsRes.data.results || [];
+      const totalPages = Math.ceil(totalItems / state.itemsPerPage) || 1;
+
       setState(prev => ({
         ...prev,
         categories: categoriesRes.data.sort((a, b) => a.name.localeCompare(b.name)),
         brands: brandsRes.data.sort((a, b) => a.name.localeCompare(b.name)),
-        products: productsRes.data,
-        filteredProducts: productsRes.data,
+        products: productsData,
+        totalPages: totalPages,
+        totalItems: totalItems,
       }));
-    
     } catch (error) {
       console.error('Error fetching initial data:', error);
     }
   };
 
-  // Fetch initial data
+  const fetchProducts = async (page = state.currentPage, pageSize = state.itemsPerPage, search = state.searchTerm) => {
+    try {
+      const url = `https://back-texnotech.onrender.com/products?page=${page}&page_size=${pageSize}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
+      console.log('Fetching from:', url); // Log the URL being requested
+      const [response, totalItems] = await Promise.all([
+        axios.get(url),
+        fetchTotalProducts(),
+      ]);
+      
+      console.log('Fetched Products:', response.data);
+
+      const productsData = Array.isArray(response.data) ? response.data : response.data.results || [];
+      const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+      setState(prev => ({
+        ...prev,
+        products: productsData,
+        totalPages: totalPages,
+        totalItems: totalItems,
+        currentPage: page,
+        itemsPerPage: pageSize,
+      }));
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
   useEffect(() => {
-    
     fetchInitialData();
-  
   }, []);
 
-  // Search results
   useEffect(() => {
+    fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
+  }, [state.searchTerm]);
 
-    const filtered = state.products.filter(product =>
-      product.name.toLowerCase().includes(state.searchTerm.toLowerCase())
-    );
-    setState(prev => ({ ...prev, filteredProducts: filtered }));
-  
-  }, [state.searchTerm, state.products]);
+  const handlePageChange = useCallback((page) => {
+    if (page >= 1 && page <= state.totalPages) {
+      fetchProducts(page, state.itemsPerPage, state.searchTerm);
+    }
+  }, [state.itemsPerPage, state.searchTerm, state.totalPages]);
 
+  const handleItemsPerPageChange = useCallback((e) => {
+    const newPageSize = parseInt(e.target.value);
+    fetchProducts(1, newPageSize, state.searchTerm);
+  }, [state.searchTerm]);
 
-  // ---- Handlers for Add Product Modal
+  const getPageNumbers = () => {
+    const maxButtons = 10;
+    const half = Math.floor(maxButtons / 2);
+    let start = Math.max(1, state.currentPage - half);
+    let end = start + maxButtons - 1;
 
-  // Open Add Product modal
+    if (end > state.totalPages) {
+      end = state.totalPages;
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    const showLeftEllipsis = start > 1;
+    const showRightEllipsis = end < state.totalPages;
+
+    return { pages, showLeftEllipsis, showRightEllipsis };
+  };
+
   const handleOpenAddProductModal = useCallback(() => {
-  
     setState(prev => ({ ...prev, isAddProductModalOpen: true }));
-  
   }, []);
 
-  // Close Add Product modal
   const handleCloseAddProductModal = useCallback(() => {
-  
-    setState(prev => ({ ...prev, isAddProductModalOpen: false , isAddProductSpecificationsModalOpen: true}));
-  
+    setState(prev => ({ ...prev, isAddProductModalOpen: false, isAddProductSpecificationsModalOpen: true }));
   }, []);
 
-  // Triggered when product added successfully
   const handleProductAdded = useCallback(async (newProduct) => {
-    
     setState(prev => ({
       ...prev,
       products: [...prev.products, newProduct],
-      filteredProducts: [...prev.filteredProducts, newProduct],
       addedProductId: newProduct.id,
       productCategoryId: newProduct.category_id,
     }));
-
-    // Open Add Product Specifications Modal
     await handleCategorySpecifications();
-  
-  }, []);
+    fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
+  }, [state.currentPage, state.itemsPerPage, state.searchTerm]);
 
-  // Add Product Specifications API call
   const handleAddProductSpecifications = useCallback(async (e) => {
     e.preventDefault();
-    
     const entries = Object.entries(state.productSpecificationsDict);
     let hasError = false;
     
     const requests = entries.map(([id, value]) => {
       const payload = { product_id: state.addedProductId, specification_id: id, value };
-      
       return axios.post('https://back-texnotech.onrender.com/p_specification', payload).catch(error => {
         console.error('Error adding specification:', error);
         hasError = true;
@@ -155,71 +196,46 @@ const ProductsTable = () => {
     });
     
     await Promise.all(requests);
-    
     if (!hasError) setState(prev => ({ ...prev, isAddProductSpecificationsModalOpen: false, isAddProductSuccessModalOpen: true }));
-  
   }, [state.productSpecificationsDict, state.addedProductId]);
 
-  // Retrieve Product's category specifications
   const handleCategorySpecifications = useCallback(async () => {
     try {
       const response = await axios.get(`https://back-texnotech.onrender.com/categories/values/${state.productCategoryId}`);
-      
       const specs = response.data;
       const newDict = specs.reduce((acc, item) => ({ ...acc, [item.id]: "" }), {});
-      
       setState(prev => ({ ...prev, productSpecifications: specs, productSpecificationsDict: newDict }));
-    
     } catch (error) {
       console.error('Error fetching specifications:', error);
     }
   }, [state.productCategoryId]);
 
-  // ---- Handlers for Add Specification Modal
-
-  // Open Add Specification Modal
   const handleOpenAddSpecificationModal = useCallback(() => {
- 
     setState(prev => ({ ...prev, isAddSpecificationModalOpen: true }));
- 
   }, []);
 
-  // Close Add Specification Modal
   const handleCloseAddSpecificationModal = useCallback(() => {
-    
     setState(prev => ({ ...prev, isAddSpecificationModalOpen: false }));
-  
   }, []);
 
-  // ---- Handle for Add Brand Modal
-  
-  // Open Add Brand Modal
   const handleOpenAddBrandModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddBrandModalOpen: true }));
   }, []);
 
-  // Close Add Brand Modal 
   const handleCloseAddBrandModal = useCallback(() => {
-    setState(prev => ({ ...prev, isAddBrandModalOpen: false }))
-  }, [])
-  
-  // Triggered when brand created successfully
+    setState(prev => ({ ...prev, isAddBrandModalOpen: false }));
+  }, []);
+
   const handleBrandAdded = useCallback((newBrand) => {
     setState(prev => ({
       ...prev,
       brands: [...prev.brands, newBrand].sort((a, b) => a.name.localeCompare(b.name)),
-    }))
-  }, [])
+    }));
+  }, []);
 
-
-  // ---- Handlers for Update Product Modal
-
-  // Retrieve Product's existing Specifications
   const handleSelectUpdateProductSpecifications = useCallback(async (product_id) => {
-  
     try {
-      
-      const product = state.filteredProducts.find(p => p.id === product_id);
+      const product = state.products.find(p => p.id === product_id);
       const [specsRes, existingSpecsRes] = await Promise.all([
         axios.get(`https://back-texnotech.onrender.com/categories/values/${product.category_id}`),
         axios.get(`https://back-texnotech.onrender.com/p_specification/values/${product_id}`),
@@ -227,7 +243,6 @@ const ProductsTable = () => {
       
       const allSpecs = specsRes.data;
       const existingSpecs = existingSpecsRes.data;
-      
       const specsDict = allSpecs.reduce((acc, spec) => {
         const existing = existingSpecs.find(es => es.id === spec.id);
         return { ...acc, [spec.id]: existing ? existing.value : "" };
@@ -239,17 +254,12 @@ const ProductsTable = () => {
         productSpecificationsDict: specsDict,
         isUpdateProductSpecificationsModalOpen: true,
       }));
-    
     } catch (error) {
       console.error('Error fetching specifications for update:', error);
     }
+  }, [state.products]);
 
-  }, [state.filteredProducts]);
-
-  // Select A Product to Update
   const handleSelectUpdateProduct = useCallback((product) => {
-
-    // Fill out variables
     setState(prev => ({
       ...prev,
       updateProductId: product.id,
@@ -267,29 +277,19 @@ const ProductsTable = () => {
       productId: product.id,
     }));
   }, []);
-  
-  // Activate/Deactivate Product(Status)
-  const   handleUpdateStatusProduct = useCallback(async (product) => {
+
+  const handleUpdateStatusProduct = useCallback(async (product) => {
     const is_active = !product.is_active;
-    
     try {
       await axios.put(`https://back-texnotech.onrender.com/products/${product.id}`, { is_active });
-      setState(prev => ({
-        ...prev,
-        products: prev.products.map(p => p.id === product.id ? { ...p, is_active } : p),
-        filteredProducts: prev.filteredProducts.map(p => p.id === product.id ? { ...p, is_active } : p),
-      }));
-    
+      fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
     } catch (error) {
       console.error('Error updating product status:', error);
     }
-  
-  }, []);
+  }, [state.currentPage, state.itemsPerPage, state.searchTerm]);
 
-  // Update Product API Call
   const handleUpdateProduct = useCallback(async (e) => {
     e.preventDefault();
-
     const payload = {
       name: state.productName,
       id: parseInt(state.productId),
@@ -305,245 +305,168 @@ const ProductsTable = () => {
       is_new: true,
       price: parseInt(state.productPrice),
     };
-
     try {
-
       await axios.put(`https://back-texnotech.onrender.com/products/${state.updateProductId}`, payload);
-
       setState(prev => ({ ...prev, isUpdateProductModalOpen: false }));
-      
       await handleSelectUpdateProductSpecifications(state.productId);
-
+      fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
     } catch (error) {
       console.error('Error updating product:', error);
     }
+  }, [state, handleSelectUpdateProductSpecifications, state.currentPage, state.itemsPerPage, state.searchTerm]);
 
-  }, [state, handleSelectUpdateProductSpecifications]);
-
-  // Assign Product Specification id to the value
   const handleProductSpecificationInput = useCallback((value, id) => {
-    
     setState(prev => ({
       ...prev,
       specificationValues: { ...prev.specificationValues, [id]: value },
       productSpecificationsDict: { ...prev.productSpecificationsDict, [id]: value },
     }));
-
   }, []);
 
-  // Delete Product's Specification
   const handleDeleteProductSpecification = useCallback(async (e, spec_id) => {
     e.preventDefault();
-    
     try {
       await axios.delete(
         `https://back-texnotech.onrender.com/p_specification/product/${state.updateProductId}/${spec_id}`,
       );
-
     } catch (error) {
-      if (error.status == 404){
-        console.error("Specification doesn't exist.")
-      }
-      else {
+      if (error.status === 404) {
+        console.error("Specification doesn't exist.");
+      } else {
         console.error('Error deleting specification:', error);
       }
-    } 
-
+    }
   }, [state.updateProductId]);
 
-  // Update Product's Specification
   const handleUpdateProductSpecifications = useCallback(async (e) => {
     e.preventDefault();
-    
     const entries = Object.entries(state.productSpecificationsDict);
     let hasError = false;
-
     try {
-      
       const existingSpecsResponse = await axios.get(`https://back-texnotech.onrender.com/p_specification/values/${state.updateProductId}`);
       const existingSpecs = existingSpecsResponse.data || [];
-
       const categorySpecsResponse = await axios.get(`https://back-texnotech.onrender.com/categories/values/${state.productCategoryId}`);
       const categorySpecs = categorySpecsResponse.data || [];
-
       const specIdToNameMap = categorySpecs.reduce((acc, spec) => {
         acc[spec.id] = spec.name;
         return acc;
       }, {});
-
       for (const [specificationId, value] of entries) {
-        
         if (value) {
           const specName = specIdToNameMap[parseInt(specificationId)];
           if (!specName) continue;
-
           const specRecord = existingSpecs.find(spec => spec.name === specName);
-
           if (specRecord && specRecord.id) {
             const payload = { product_id: state.updateProductId, value };
-            
             try {
               await axios.put(`https://back-texnotech.onrender.com/p_specification/${specRecord.id}`, payload);
             } catch (error) {
               console.error(`Error updating specification ${specName}:`, error);
               hasError = true;
             }
-
           } else {
-            
             const specToCreate = categorySpecs.find(spec => spec.name === specName);
-            
             if (specToCreate) {
-              
               const payload = { 
                 product_id: state.updateProductId, 
                 specification_id: parseInt(specificationId), 
                 value 
               };
-              
               try {
                 await axios.post('https://back-texnotech.onrender.com/p_specification', payload);
-              
               } catch (error) {
                 console.error(`Error adding new specification ${specName}:`, error);
                 hasError = true;
               }
             }
-
           }
         }
       }
-
       if (!hasError) {
         setState(prev => ({ ...prev, isUpdateProductSpecificationsModalOpen: false }));
+        fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
       }
-
     } catch (error) {
       console.error('Error fetching or updating specifications:', error);
       hasError = true;
     }
+  }, [state.productSpecificationsDict, state.updateProductId, state.productCategoryId, state.currentPage, state.itemsPerPage, state.searchTerm]);
 
-  }, [state.productSpecificationsDict, state.updateProductId, state.productCategoryId]);
-
-  // Select Product's Category
   const handleCategoryChange = useCallback((e) => setState(prev => ({ ...prev, productCategoryId: e.target.value })), []);
-  
-  // Select Product's Brand
   const handleBrandChange = useCallback((e) => setState(prev => ({ ...prev, productBrandId: e.target.value })), []);
 
-
-  // ---- Handlers for Images
-
-  // Update Product's Image
   const uploadMainImage = useCallback(async (file, productId) => {
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
-
-      // Upload image
       const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
-      
       if (!uploadResponse.ok) throw new Error("Image upload failed.");
-      
       const imageLink = await uploadResponse.json();
       const imagePayload = { image_link: imageLink };
-      
-      // Update Product's image
       const dbResponse = await fetch(`https://back-texnotech.onrender.com/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(imagePayload),
       });
-
       if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
-      
       setState(prev => ({ ...prev, productImageLink: imageLink }));
-
+      fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
     } catch (error) {
       console.error("Error uploading main image:", error);
     }
+  }, [state.currentPage, state.itemsPerPage, state.searchTerm]);
 
-  }, []);
-
-  // Set Product's Image
   const uploadAndAddImage = useCallback(async (file, productId) => {
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
-      
-      // Upload image
       const uploadResponse = await fetch("https://back-texnotech.onrender.com/files", { method: "POST", body: formData });
-      
       if (!uploadResponse.ok) throw new Error("Image upload failed.");
-      
       const imageLink = await uploadResponse.json();
       const imagePayload = { image_link: imageLink, product_id: productId };
-      
-      // Update Product's image
       const dbResponse = await fetch("https://back-texnotech.onrender.com/images/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(imagePayload),
       });
-      
       if (!dbResponse.ok) throw new Error("Failed to add image to the database.");
-      
       setState(prev => ({ ...prev, extraImages: [...prev.extraImages, { image_link: imageLink, product_id: productId }] }));
-    
     } catch (error) {
       console.error("Error uploading extra image:", error);
     }
-
   }, []);
 
-  // Delete Product's extra Image
   const handleDeleteExtraImage = useCallback(async (id) => {
-
     try {
-
       const response = await fetch(`https://back-texnotech.onrender.com/images/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_id: id }),
       });
-
       if (response.ok) {
         setState(prev => ({
           ...prev,
           extraImages: prev.extraImages.filter(image => image.id !== id),
         }));
       }
-
     } catch (error) {
       console.error('Error deleting image:', error);
     }
-
   }, []);
 
-  // Change uploaded Image
   const handleFileChange = useCallback((e) => {
     const files = Array.from(e.target.files);
     setState(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...files] }));
   }, []);
 
-
-  // ---- Handlers for Add Category Modal
-
-  // Open Add Category Modal 
   const handleOpenAddCategoryModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddCategoryModalOpen: true }));
   }, []);
 
-  // Close Add Category Modal
   const handleCloseAddCategoryModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddCategoryModalOpen: false }));
   }, []);
 
-  // Triggered when Category is successfully created
   const handleCategoryAdded = useCallback((newCategory) => {
     setState(prev => ({
       ...prev,
@@ -551,32 +474,19 @@ const ProductsTable = () => {
     }));
   }, []);
 
-
-  // ---- Handlers for UTILS
-
-  // Search a Product
   const handleSearch = useCallback((e) => {
     const term = e.target.value;
-    setState(prev => ({
-      ...prev,
-      searchTerm: term,
-    }));
+    setState(prev => ({ ...prev, searchTerm: term }));
   }, []);
 
-  // Refresh Products
   const handleRefreshProducts = useCallback(async () => {
     try {
-
       await axios.delete('https://back-texnotech.onrender.com/others/cache/clear');
-      const response = await axios.get('https://back-texnotech.onrender.com/products');
-      setState(prev => ({ ...prev, products: response.data, filteredProducts: response.data, searchTerm: "" }));
-    
+      fetchProducts(1, state.itemsPerPage, "");
     } catch (error) {
       console.error('Error refreshing products:', error);
     }
-
-  }, []);
-
+  }, [state.itemsPerPage]);
 
   return (
     <motion.div
@@ -585,8 +495,6 @@ const ProductsTable = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-
-      {/* Table Header */}
       <ProductTableHeader
         searchTerm={state.searchTerm}
         handleSearch={handleSearch}
@@ -597,7 +505,6 @@ const ProductsTable = () => {
         handleRefreshProducts={handleRefreshProducts}
       />
 
-      {/* Add Modals */}
       <AddProductModal
         isOpen={state.isAddProductModalOpen}
         onClose={handleCloseAddProductModal}
@@ -605,7 +512,6 @@ const ProductsTable = () => {
         categories={state.categories}
         brands={state.brands}
       />
-
       <AddProductSpecificationsModal
         isOpen={state.isAddProductSpecificationsModalOpen}
         onClose={() => setState((prev) => ({ ...prev, isAddProductSpecificationsModalOpen: false }))}
@@ -618,7 +524,6 @@ const ProductsTable = () => {
         onSubmit={handleAddProductSpecifications}
         isUploadComplete={state.isUploadComplete}
       />
-
       <AddCategoryModal
         isOpen={state.isAddCategoryModalOpen}
         onClose={handleCloseAddCategoryModal}
@@ -636,15 +541,78 @@ const ProductsTable = () => {
         onBrandAdded={handleBrandAdded}
       />
 
-      {/* Table content */}
       <ProductTableContent
-        products={state.filteredProducts}
+        products={state.products}
         categories={state.categories}
         handleSelectUpdateProduct={handleSelectUpdateProduct}
         handleUpdateStatusProduct={handleUpdateStatusProduct}
       />
 
-      {/* Update Modals */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-gray-400">
+          Showing {(state.currentPage - 1) * state.itemsPerPage + 1} to{' '}
+          {Math.min(state.currentPage * state.itemsPerPage, state.totalItems)} of{' '}
+          {state.totalItems} products
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <select
+              value={state.itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="bg-gray-700 text-gray-300 rounded-md p-1"
+            >
+              {state.itemsPerPageOptions.map(option => (
+                <option key={option} value={option}>
+                  {option} per page
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={() => handlePageChange(state.currentPage - 1)}
+            disabled={state.currentPage === 1}
+            className="p-2 rounded-md bg-gray-700 text-gray-300 disabled:opacity-50 hover:bg-gray-600"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex gap-1">
+            {(() => {
+              const { pages, showLeftEllipsis, showRightEllipsis } = getPageNumbers();
+              return (
+                <>
+                  {showLeftEllipsis && (
+                    <span className="px-3 py-1 text-gray-300">...</span>
+                  )}
+                  {pages.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-1 rounded-md ${
+                        state.currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  {showRightEllipsis && (
+                    <span className="px-3 py-1 text-gray-300">...</span>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          <button
+            onClick={() => handlePageChange(state.currentPage + 1)}
+            disabled={state.currentPage === state.totalPages}
+            className="p-2 rounded-md bg-gray-700 text-gray-300 disabled:opacity-50 hover:bg-gray-600"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+
       <UpdateProductModal
         isOpen={state.isUpdateProductModalOpen}
         onClose={() => setState(prev => ({ ...prev, isUpdateProductModalOpen: false }))}
@@ -661,22 +629,17 @@ const ProductsTable = () => {
           isSuperOffer: state.isSuperOffer,
           productImageLink: state.productImageLink,
         }}
-
         categories={state.categories}
         brands={state.brands}
-
         handleUpdateProduct={handleUpdateProduct}
         handleCategoryChange={handleCategoryChange}
         handleBrandChange={handleBrandChange}
         uploadMainImage={uploadMainImage}
         uploadAndAddImage={uploadAndAddImage}
         handleDeleteExtraImage={handleDeleteExtraImage}
-
         extraImages={state.extraImages}
-
         setState={setState}
       />
-
       <UpdateProductSpecificationsModal
         isOpen={state.isUpdateProductSpecificationsModalOpen}
         onClose={() => setState(prev => ({ ...prev, isUpdateProductSpecificationsModalOpen: false }))}
@@ -686,7 +649,6 @@ const ProductsTable = () => {
         handleDeleteProductSpecification={handleDeleteProductSpecification}
         handleUpdateProductSpecifications={handleUpdateProductSpecifications}
       />
-
     </motion.div>
   );
 };
