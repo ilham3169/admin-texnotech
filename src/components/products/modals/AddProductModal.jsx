@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 
-
 const AddProductModal = ({ isOpen, onClose, onProductAdded, categories, brands }) => {
   const [productName, setProductName] = useState('');
   const [productCategoryId, setProductCategoryId] = useState('');
@@ -40,13 +39,11 @@ const AddProductModal = ({ isOpen, onClose, onProductAdded, categories, brands }
         });
         if (!response.ok) throw new Error("File upload failed");
         imageLink = await response.json();
-      
       } catch (err) {
         setError('Failed to upload image. Please try again.');
         setIsLoading(false);
         return;
       }
-
     }
 
     const productPayload = {
@@ -56,24 +53,21 @@ const AddProductModal = ({ isOpen, onClose, onProductAdded, categories, brands }
       image_link: imageLink,
       brend_id: parseInt(productBrandId),
       model_name: productModel,
-      discount: parseInt(productDiscount || 0),
+      discount: productDiscount ? parseFloat(productDiscount) : 0,
       search_string: productKeywords,
       author_id: 1,
       is_super: isSuperOffer,
       is_new: true,
-      price: parseInt(productPrice),
+      price: parseFloat(productPrice),
     };
 
     try {
       const response = await axios.post('https://back-texnotech.onrender.com/products/add', productPayload);
-
       await onProductAdded(response.data); // Notify parent
       onClose(); // Close modal
-    
     } catch (err) {
       setError('Failed to add product. Please try again.');
       console.error('Error adding product:', err);
-    
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +146,8 @@ const AddProductModal = ({ isOpen, onClose, onProductAdded, categories, brands }
               <label className="block text-sm font-medium text-gray-300 mb-2">Qiymət</label>
               <input
                 type="number"
+                step="0.01"
+                min="0"
                 className="bg-gray-700 text-white rounded-lg p-2 w-full"
                 value={productPrice}
                 onChange={(e) => setProductPrice(e.target.value)}
@@ -162,6 +158,8 @@ const AddProductModal = ({ isOpen, onClose, onProductAdded, categories, brands }
               <label className="block text-sm font-medium text-gray-300 mb-2">Endirimli Qiymət</label>
               <input
                 type="number"
+                step="0.01"
+                min="0"
                 className="bg-gray-700 text-white rounded-lg p-2 w-full"
                 value={productDiscount}
                 onChange={(e) => setProductDiscount(e.target.value)}

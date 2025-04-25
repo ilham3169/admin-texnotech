@@ -4,16 +4,85 @@ import { motion } from 'framer-motion';
 import { Search, Plus, RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import AddProductModal from "./modals/AddProductModal.jsx";
-import AddCategoryModal from './modals/AddCategoryModal.jsx'; 
+import AddCategoryModal from './modals/AddCategoryModal.jsx';
 import AddSpecificationModal from './modals/AddSpecificationModal.jsx';
-import AddBrandModal from './modals/AddBrandModal.jsx'; 
+import AddBrandModal from './modals/AddBrandModal.jsx';
 import AddProductSpecificationsModal from "./modals/AddProductSpecificationsModal.jsx";
-
 import UpdateProductModal from "./modals/UpdateProductModal.jsx";
 import UpdateProductSpecificationsModal from "./modals/UpdateProductSpecificationsModal.jsx";
-
 import ProductTableContent from './ProductTableContent.jsx';
-import ProductTableHeader from "./ProductTableHeader.jsx";
+
+// Debounce utility function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
+const ProductTableHeader = ({
+  searchTerm,
+  setSearchTerm,
+  handleSearch,
+  handleOpenAddProductModal,
+  handleOpenBrandModal,
+  handleOpenAddCategoryModal,
+  handleOpenAddSpecificationModal,
+  handleRefreshProducts,
+}) => {
+  return (
+    <div className="flex justify-between items-center mb-6">
+      <div className="relative">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+          placeholder="Search products by name or ID..."
+          className="pl-10 pr-4 py-2 rounded-md bg-gray-700 text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 w-64"
+        />
+        <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={handleOpenAddProductModal}
+          className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          <Plus size={20} />
+        </button>
+        <button
+          onClick={handleOpenAddCategoryModal}
+          className="p-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+        >
+          Kategoriya əlavə et
+        </button>
+        <button
+          onClick={handleOpenBrandModal}
+          className="p-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+        >
+          Brand Əlavə et
+        </button>
+        <button
+          onClick={handleOpenAddSpecificationModal}
+          className="p-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+        >
+          Spesifikasiya Əlavə et
+        </button>
+        <button
+          onClick={handleRefreshProducts}
+          className="p-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+        >
+          <RefreshCcw size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ProductsTable = () => {
   const [state, setState] = useState({
@@ -52,14 +121,15 @@ const ProductsTable = () => {
     currentPage: 1,
     itemsPerPage: 10,
     itemsPerPageOptions: [5, 10, 20, 50],
-    totalPages: 1, // Will be calculated from total products
-    totalItems: 0, // Fetched from /num-products
+    totalPages: 1,
+    totalItems: 0,
+    isLoading: false,
   });
 
   const fetchTotalProducts = async () => {
     try {
       const response = await axios.get('https://back-texnotech.onrender.com/products/num-products');
-      const totalItems = response.data.num_products || response.data.count || response.data; // Adjust based on response structure
+      const totalItems = response.data.num_products || response.data.count || response.data;
       return totalItems;
     } catch (error) {
       console.error('Error fetching total products:', error);
@@ -76,9 +146,6 @@ const ProductsTable = () => {
         fetchTotalProducts(),
       ]);
 
-      console.log('Products Response:', productsRes.data);
-      console.log('Total Items:', totalItems);
-
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : productsRes.data.results || [];
       const totalPages = Math.ceil(totalItems / state.itemsPerPage) || 1;
 
@@ -87,8 +154,8 @@ const ProductsTable = () => {
         categories: categoriesRes.data.sort((a, b) => a.name.localeCompare(b.name)),
         brands: brandsRes.data.sort((a, b) => a.name.localeCompare(b.name)),
         products: productsData,
-        totalPages: totalPages,
-        totalItems: totalItems,
+        totalPages,
+        totalItems,
       }));
     } catch (error) {
       console.error('Error fetching initial data:', error);
@@ -97,14 +164,13 @@ const ProductsTable = () => {
 
   const fetchProducts = async (page = state.currentPage, pageSize = state.itemsPerPage, search = state.searchTerm) => {
     try {
-      const url = `https://back-texnotech.onrender.com/products?page=${page}&page_size=${pageSize}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
-      console.log('Fetching from:', url); // Log the URL being requested
+      setState(prev => ({ ...prev, isLoading: true }));
+      const url = `https://back-texnotech.onrender.com/products?page=${page}&page_size=${pageSize}${search ? `&search_query=${encodeURIComponent(search)}` : ''}`;
+      console.log('Fetching from:', url);
       const [response, totalItems] = await Promise.all([
         axios.get(url),
         fetchTotalProducts(),
       ]);
-      
-      console.log('Fetched Products:', response.data);
 
       const productsData = Array.isArray(response.data) ? response.data : response.data.results || [];
       const totalPages = Math.ceil(totalItems / pageSize) || 1;
@@ -112,23 +178,28 @@ const ProductsTable = () => {
       setState(prev => ({
         ...prev,
         products: productsData,
-        totalPages: totalPages,
-        totalItems: totalItems,
+        totalPages,
+        totalItems,
         currentPage: page,
         itemsPerPage: pageSize,
+        isLoading: false,
       }));
     } catch (error) {
       console.error('Error fetching products:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
     }
   };
+
+  const debouncedFetchProducts = useCallback(
+    debounce((page, pageSize, search) => {
+      fetchProducts(page, pageSize, search);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
     fetchInitialData();
   }, []);
-
-  useEffect(() => {
-    fetchProducts(state.currentPage, state.itemsPerPage, state.searchTerm);
-  }, [state.searchTerm]);
 
   const handlePageChange = useCallback((page) => {
     if (page >= 1 && page <= state.totalPages) {
@@ -163,6 +234,23 @@ const ProductsTable = () => {
     return { pages, showLeftEllipsis, showRightEllipsis };
   };
 
+  const setSearchTerm = useCallback((term) => {
+    setState(prev => ({ ...prev, searchTerm: term }));
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    fetchProducts(1, state.itemsPerPage, state.searchTerm);
+  }, [state.itemsPerPage, state.searchTerm]);
+
+  const handleRefreshProducts = useCallback(async () => {
+    try {
+      await axios.delete('https://back-texnotech.onrender.com/others/cache/clear');
+      fetchProducts(1, state.itemsPerPage, state.searchTerm);
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+    }
+  }, [state.itemsPerPage, state.searchTerm]);
+
   const handleOpenAddProductModal = useCallback(() => {
     setState(prev => ({ ...prev, isAddProductModalOpen: true }));
   }, []);
@@ -186,7 +274,7 @@ const ProductsTable = () => {
     e.preventDefault();
     const entries = Object.entries(state.productSpecificationsDict);
     let hasError = false;
-    
+
     const requests = entries.map(([id, value]) => {
       const payload = { product_id: state.addedProductId, specification_id: id, value };
       return axios.post('https://back-texnotech.onrender.com/p_specification', payload).catch(error => {
@@ -194,7 +282,7 @@ const ProductsTable = () => {
         hasError = true;
       });
     });
-    
+
     await Promise.all(requests);
     if (!hasError) setState(prev => ({ ...prev, isAddProductSpecificationsModalOpen: false, isAddProductSuccessModalOpen: true }));
   }, [state.productSpecificationsDict, state.addedProductId]);
@@ -240,14 +328,14 @@ const ProductsTable = () => {
         axios.get(`https://back-texnotech.onrender.com/categories/values/${product.category_id}`),
         axios.get(`https://back-texnotech.onrender.com/p_specification/values/${product_id}`),
       ]);
-      
+
       const allSpecs = specsRes.data;
       const existingSpecs = existingSpecsRes.data;
       const specsDict = allSpecs.reduce((acc, spec) => {
         const existing = existingSpecs.find(es => es.id === spec.id);
         return { ...acc, [spec.id]: existing ? existing.value : "" };
       }, {});
-      
+
       setState(prev => ({
         ...prev,
         productSpecifications: allSpecs,
@@ -367,10 +455,10 @@ const ProductsTable = () => {
           } else {
             const specToCreate = categorySpecs.find(spec => spec.name === specName);
             if (specToCreate) {
-              const payload = { 
-                product_id: state.updateProductId, 
-                specification_id: parseInt(specificationId), 
-                value 
+              const payload = {
+                product_id: state.updateProductId,
+                specification_id: parseInt(specificationId),
+                value,
               };
               try {
                 await axios.post('https://back-texnotech.onrender.com/p_specification', payload);
@@ -474,20 +562,6 @@ const ProductsTable = () => {
     }));
   }, []);
 
-  const handleSearch = useCallback((e) => {
-    const term = e.target.value;
-    setState(prev => ({ ...prev, searchTerm: term }));
-  }, []);
-
-  const handleRefreshProducts = useCallback(async () => {
-    try {
-      await axios.delete('https://back-texnotech.onrender.com/others/cache/clear');
-      fetchProducts(1, state.itemsPerPage, "");
-    } catch (error) {
-      console.error('Error refreshing products:', error);
-    }
-  }, [state.itemsPerPage]);
-
   return (
     <motion.div
       className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8"
@@ -497,6 +571,7 @@ const ProductsTable = () => {
     >
       <ProductTableHeader
         searchTerm={state.searchTerm}
+        setSearchTerm={setSearchTerm}
         handleSearch={handleSearch}
         handleOpenAddProductModal={handleOpenAddProductModal}
         handleOpenBrandModal={handleOpenAddBrandModal}
@@ -514,7 +589,7 @@ const ProductsTable = () => {
       />
       <AddProductSpecificationsModal
         isOpen={state.isAddProductSpecificationsModalOpen}
-        onClose={() => setState((prev) => ({ ...prev, isAddProductSpecificationsModalOpen: false }))}
+        onClose={() => setState(prev => ({ ...prev, isAddProductSpecificationsModalOpen: false }))}
         productSpecifications={state.productSpecifications}
         productSpecificationsDict={state.productSpecificationsDict}
         onSpecificationChange={handleProductSpecificationInput}
@@ -541,12 +616,18 @@ const ProductsTable = () => {
         onBrandAdded={handleBrandAdded}
       />
 
-      <ProductTableContent
-        products={state.products}
-        categories={state.categories}
-        handleSelectUpdateProduct={handleSelectUpdateProduct}
-        handleUpdateStatusProduct={handleUpdateStatusProduct}
-      />
+      {state.isLoading ? (
+        <div className="text-gray-300 text-center py-4">Loading products...</div>
+      ) : state.products.length === 0 ? (
+        <div className="text-gray-300 text-center py-4">No products found</div>
+      ) : (
+        <ProductTableContent
+          products={state.products}
+          categories={state.categories}
+          handleSelectUpdateProduct={handleSelectUpdateProduct}
+          handleUpdateStatusProduct={handleUpdateStatusProduct}
+        />
+      )}
 
       <div className="flex justify-between items-center mt-4">
         <div className="text-gray-400">
@@ -555,19 +636,17 @@ const ProductsTable = () => {
           {state.totalItems} products
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <select
-              value={state.itemsPerPage}
-              onChange={handleItemsPerPageChange}
-              className="bg-gray-700 text-gray-300 rounded-md p-1"
-            >
-              {state.itemsPerPageOptions.map(option => (
-                <option key={option} value={option}>
-                  {option} per page
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={state.itemsPerPage}
+            onChange={handleItemsPerPageChange}
+            className="bg-gray-700 text-gray-300 rounded-md p-1"
+          >
+            {state.itemsPerPageOptions.map(option => (
+              <option key={option} value={option}>
+                {option} per page
+              </option>
+            ))}
+          </select>
           <button
             onClick={() => handlePageChange(state.currentPage - 1)}
             disabled={state.currentPage === 1}
@@ -583,7 +662,7 @@ const ProductsTable = () => {
                   {showLeftEllipsis && (
                     <span className="px-3 py-1 text-gray-300">...</span>
                   )}
-                  {pages.map((page) => (
+                  {pages.map(page => (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
