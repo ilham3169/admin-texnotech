@@ -386,12 +386,12 @@ const ProductsTable = () => {
       image_link: state.productImageLink,
       brend_id: parseInt(state.productBrandId),
       model_name: state.productModel,
-      discount: parseInt(state.productDiscount || 0),
+      discount: parseFloat(state.productDiscount || 0),
       search_string: state.productKeywords,
       author_id: 1,
       is_super: state.isSuperOffer,
       is_new: true,
-      price: parseInt(state.productPrice),
+      price: parseFloat(state.productPrice),
     };
     try {
       await axios.put(`https://back-texnotech.onrender.com/products/${state.updateProductId}`, payload);
