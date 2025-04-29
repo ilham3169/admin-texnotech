@@ -7,7 +7,7 @@ const RevenueChart = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/google-api/search-console/impressions-by-date")
+      .get("https://back-texnotech.onrender.com/google-api/search-console/impressions-by-date")
       .then((res) => {
         setChartData(res.data); // Assuming your API returns array of { date: '2025-04-01', impressions: 123 }
       })
