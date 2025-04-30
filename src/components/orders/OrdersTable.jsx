@@ -443,11 +443,18 @@ const OrdersTable = () => {
                     </button>
                   )}
                 </p>
+
                 <p>
                   <span className="font-semibold text-indigo-300">Tarix:</span>
                   <br />
                   {new Date(selectedOrder.created_at).toLocaleString()}
                 </p>
+
+                <p>
+                  <span className="font-semibold text-indigo-300">Çatdırılma növü :</span>
+                  <p> {selectedOrder.delivery === "courier" ? "Kuriyer" : "Təhvil Məntəqəsi"} </p>
+                </p>
+
               </div>
 
               <div className="mt-6">
