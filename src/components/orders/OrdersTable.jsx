@@ -15,16 +15,15 @@ const OrdersTable = () => {
 
   const fetchOrders = async () => {
     try {
-      // Fetch all orders from the existing backend
       const response = await fetch("https://back-texnotech.onrender.com/orders");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-
+  
       // Basic Auth credentials for Kapital Bank API
       const username = "TerminalSys/kapital";
       const password = "kapital123";
       const authHeader = `Basic ${btoa(`${username}:${password}`)}`;
-
+  
       const updatedOrders = await Promise.all(
         data.map(async (order) => {
           if (order.payment_method === "card") {
@@ -44,17 +43,76 @@ const OrdersTable = () => {
               }
               const kapitalData = await kapitalResponse.json();
               console.log(`Kapital Bank API response for order ${order.id}:`, kapitalData);
-              return { ...order, kapitalData }; 
+  
+              if (kapitalData && typeof kapitalData === 'object' && kapitalData.order) {
+                const orderId = kapitalData.order.id;
+                const xorderStatus = kapitalData.order.status || "pending";
+                let orderStatus = xorderStatus.toLowerCase();
+                if(orderStatus == "preparing") { orderStatus = "unpaid" }
+                if(orderStatus == "fullypaid") { orderStatus = "paid"}
+                if(orderStatus == "declined" || orderStatus == "expired") {
+                  orderStatus = "canceled"
+                  try {
+                    const updateResponse = await fetch(
+                      `https://back-texnotech.onrender.com/orders/${orderId}/status`,
+                      {
+                        method: "PATCH",
+                        headers: { 
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status: orderStatus }),
+                      }
+                    );
+                    if (!updateResponse.ok) {
+                      console.error(
+                        `Failed to update status for order ${orderId}: ${updateResponse.status}`
+                      );
+                    } else {
+                      console.log(`Successfully updated status for order ${orderId}`);
+                    }
+                  } catch (error) {
+                    console.error(`Error updating status for order ${orderId}:`, error);
+                  }
+                  orderStatus = "unpaid"                 
+
+                }
+  
+                try {
+                  const updateResponse = await fetch(
+                    `https://back-texnotech.onrender.com/orders/${orderId}/payment`,
+                    {
+                      method: "PATCH",
+                      headers: { 
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ payment_status: orderStatus }),
+                    }
+                  );
+                  if (!updateResponse.ok) {
+                    console.error(
+                      `Failed to update payment status for order ${orderId}: ${updateResponse.status}`
+                    );
+                  } else {
+                    console.log(`Successfully updated payment status for order ${orderId}`);
+                  }
+                } catch (error) {
+                  console.error(`Error updating status for order ${orderId}:`, error);
+                }
+              } else {
+                console.log('Kapital Data does not contain a valid order object:', kapitalData);
+              }
+  
+              return { ...order, kapitalData };
             } catch (error) {
               console.error(`Error fetching Kapital Bank data for order ${order.id}:`, error);
-              return order;
+              return { ...order, kapitalData: null };
             }
           } else {
             return order;
           }
         })
       );
-
+  
       // Update state with processed orders
       setOrders(updatedOrders);
       setFilteredOrders(updatedOrders);
@@ -285,17 +343,21 @@ const OrdersTable = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        order.payment_status === "paid"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {order.payment_status === "paid"
-                        ? "ödənilmişdir"
-                        : "ödənilməmişdir"}
-                    </span>
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      order.payment_status === "paid" ? "bg-green-100 text-green-800" :
+                      order.payment_status === "unpaid" ? "bg-red-100 text-red-800" :
+                      order.payment_status === "failed" ? "bg-yellow-100 text-yellow-800" :
+                      order.payment_status === "refund" ? "bg-blue-100 text-blue-800" :
+                      "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {order.payment_status === "paid" ? "Ödənilmişdir" :
+                    order.payment_status === "unpaid" ? "Ödənilməmişdir" :
+                    order.payment_status === "failed" ? "İmtina" :
+                    order.payment_status === "refund" ? "Geri qaytarılmışdır" :
+                    "Naməlum Status"}
+                  </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     {order.created_at}
@@ -451,7 +513,7 @@ const OrdersTable = () => {
                 </p>
 
                 <p>
-                  <span className="font-semibold text-indigo-300">Çatdırılma növü :</span>
+                  <span className="font-bold text-indigo-300">Çatdırılma növü :</span>
                   <p> {selectedOrder.delivery_method === "courier" ? "Kuriyer" : "Təhvil Məntəqəsi"} </p>
                 </p>
 
