@@ -452,7 +452,7 @@ const OrdersTable = () => {
 
                 <p>
                   <span className="font-semibold text-indigo-300">Çatdırılma növü :</span>
-                  <p> {selectedOrder.delivery === "courier" ? "Kuriyer" : "Təhvil Məntəqəsi"} </p>
+                  <p> {selectedOrder.delivery_method === "courier" ? "Kuriyer" : "Təhvil Məntəqəsi"} </p>
                 </p>
 
               </div>
