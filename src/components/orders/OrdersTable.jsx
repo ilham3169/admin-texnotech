@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, Eye, X, Trash2, RefreshCcw } from "lucide-react";
-
 import axios from 'axios';
-
 
 const OrdersTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,17 +10,54 @@ const OrdersTable = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productDetails, setProductDetails] = useState({});
-
-  const [deleteOrderId, setDeleteOrderId] = useState(null)
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
   const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
 
   const fetchOrders = async () => {
     try {
+      // Fetch all orders from the existing backend
       const response = await fetch("https://back-texnotech.onrender.com/orders");
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-      setOrders(data);
-      setFilteredOrders(data);
+
+      // Basic Auth credentials for Kapital Bank API
+      const username = "TerminalSys/kapital";
+      const password = "kapital123";
+      const authHeader = `Basic ${btoa(`${username}:${password}`)}`;
+
+      const updatedOrders = await Promise.all(
+        data.map(async (order) => {
+          if (order.payment_method === "card") {
+            try {
+              const kapitalResponse = await fetch(
+                `https://txpgtst.kapitalbank.az/api/order/${order.id}?tranDetailLevel=1`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": authHeader,
+                  },
+                }
+              );
+              if (!kapitalResponse.ok) {
+                throw new Error(`Kapital Bank API error for order ${order.id}: ${kapitalResponse.status}`);
+              }
+              const kapitalData = await kapitalResponse.json();
+              console.log(`Kapital Bank API response for order ${order.id}:`, kapitalData);
+              return { ...order, kapitalData }; 
+            } catch (error) {
+              console.error(`Error fetching Kapital Bank data for order ${order.id}:`, error);
+              return order;
+            }
+          } else {
+            return order;
+          }
+        })
+      );
+
+      // Update state with processed orders
+      setOrders(updatedOrders);
+      setFilteredOrders(updatedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
@@ -100,53 +135,52 @@ const OrdersTable = () => {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
-	try {
-	  const response = await fetch(`https://back-texnotech.onrender.com/orders/${orderId}/status`, {
-		method: "PATCH",
-		headers: {
-		  "Content-Type": "application/json",
-		},
-		body: JSON.stringify({ status: newStatus }),
-	  });
-	  if (!response.ok) throw new Error("Failed to update order status");
-	  const updatedOrder = await response.json();
-	  setSelectedOrder(updatedOrder);
-	  setOrders(orders.map((order) => (order.id === orderId ? updatedOrder : order)));
-	  setFilteredOrders(
-		filteredOrders.map((order) => (order.id === orderId ? updatedOrder : order))
-	  );
-	} catch (error) {
-	  console.error("Error updating order status:", error);
-	  alert("Failed to update status. Please try again.");
-	}
+    try {
+      const response = await fetch(`https://back-texnotech.onrender.com/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!response.ok) throw new Error("Failed to update order status");
+      const updatedOrder = await response.json();
+      setSelectedOrder(updatedOrder);
+      setOrders(orders.map((order) => (order.id === orderId ? updatedOrder : order)));
+      setFilteredOrders(
+        filteredOrders.map((order) => (order.id === orderId ? updatedOrder : order))
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      alert("Failed to update status. Please try again.");
+    }
   };
 
   const handleSelectDeleteOrder = async (order_id) => {
-    setDeleteOrderId(order_id)
-    setIsDeleteOrderModalOpen(true)
-  }
+    setDeleteOrderId(order_id);
+    setIsDeleteOrderModalOpen(true);
+  };
 
   const handleDeleteOrder = async (e) => {
     e.preventDefault();
-    
     try {
       const response = await axios.delete(
         `https://back-texnotech.onrender.com/orders/${deleteOrderId}`,
         {
           headers: {
-            'Content-Type': 'application/json', 
+            'Content-Type': 'application/json',
           },
         }
       );
-      setIsDeleteOrderModalOpen(false)
-
+      setIsDeleteOrderModalOpen(false);
+      fetchOrders(); // Refresh orders after deletion
     } catch (error) {
       console.error('Error deleting order:', error);
     }
-  }
+  };
 
   const statusOptions = ["pending", "processing", "shipped", "delivered", "canceled"];
-  
+
   return (
     <>
       <motion.div
@@ -156,11 +190,11 @@ const OrdersTable = () => {
         transition={{ delay: 0.4 }}
       >
         <div className="flex justify-between items-center mb-6">
-          <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <h2 className="text-xl font-semibold text-gray-100">Sifarişlərin siyahısı</h2>
             <button
               onClick={fetchOrders}
-              className=" hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex"
+              className="hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200 flex"
             >
               <RefreshCcw size={20} />
             </button>
@@ -224,21 +258,20 @@ const OrdersTable = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      order.status === "delivered"
-                        ? "bg-green-100 text-green-800"
-                        : order.status === "processing"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : order.status === "shipped"
-                        ? "bg-blue-100 text-blue-800"
-                        : order.status === "pending"
-                        ? "bg-gray-100 text-gray-800"
-                        : order.status === "canceled"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800" // Default case
+                        order.status === "delivered"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "processing"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : order.status === "shipped"
+                          ? "bg-blue-100 text-blue-800"
+                          : order.status === "pending"
+                          ? "bg-gray-100 text-gray-800"
+                          : order.status === "canceled"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {
-                        order.status === "delivered"
+                      {order.status === "delivered"
                         ? "çatdırılmışdır"
                         : order.status === "processing"
                         ? "davam edir"
@@ -248,8 +281,7 @@ const OrdersTable = () => {
                         ? "gözləyir"
                         : order.status === "canceled"
                         ? "ləğv edildi"
-                        : "none"
-                      }
+                        : "none"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
@@ -275,7 +307,8 @@ const OrdersTable = () => {
                     >
                       <Eye size={20} />
                     </button>
-                    <button className="text-red-400 hover:text-red-300"
+                    <button
+                      className="text-red-400 hover:text-red-300"
                       onClick={() => handleSelectDeleteOrder(order.id)}
                     >
                       <Trash2 size={18} />
@@ -301,7 +334,6 @@ const OrdersTable = () => {
             animate={{ scale: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            {/* Modal Header */}
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-white tracking-tight">
                 Sifariş #{selectedOrder.id}
@@ -314,7 +346,6 @@ const OrdersTable = () => {
               </button>
             </div>
 
-            {/* Order Details */}
             <div className="space-y-4 text-gray-200">
               <div className="grid grid-cols-2 gap-4">
                 <p>
@@ -339,20 +370,19 @@ const OrdersTable = () => {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         selectedOrder.status === "delivered"
-                        ? "bg-green-500/20 text-green-300"
-                        : selectedOrder.status === "processing"
-                        ? "bg-yellow-500/20 text-yellow-300"
-                        : selectedOrder.status === "shipped"
-                        ? "bg-blue-500/20 text-blue-300"
-                        : selectedOrder.status === "pending"
-                        ? "bg-gray-500/20 text-gray-300"
-                        : selectedOrder.status === "canceled"
-                        ? "bg-red-500/20 text-red-300"
-                        : "bg-gray-500/20 text-gray-300" // Default case
+                          ? "bg-green-500/20 text-green-300"
+                          : selectedOrder.status === "processing"
+                          ? "bg-yellow-500/20 text-yellow-300"
+                          : selectedOrder.status === "shipped"
+                          ? "bg-blue-500/20 text-blue-300"
+                          : selectedOrder.status === "pending"
+                          ? "bg-gray-500/20 text-gray-300"
+                          : selectedOrder.status === "canceled"
+                          ? "bg-red-500/20 text-red-300"
+                          : "bg-gray-500/20 text-gray-300"
                       }`}
                     >
-                      {
-                        selectedOrder.status === "delivered"
+                      {selectedOrder.status === "delivered"
                         ? "çatdırılmışdır"
                         : selectedOrder.status === "processing"
                         ? "davam edir"
@@ -362,9 +392,8 @@ const OrdersTable = () => {
                         ? "gözləyir"
                         : selectedOrder.status === "canceled"
                         ? "ləğv edildi"
-                        : "none"
-                      }
-					          </span>
+                        : "none"}
+                    </span>
                   </span>
                   <select
                     value={selectedOrder.status}
@@ -373,19 +402,17 @@ const OrdersTable = () => {
                   >
                     {statusOptions.map((status) => (
                       <option key={status} value={status}>
-                        {
-                        status === "delivered"
-                        ? "çatdırılmışdır"
-                        : status === "processing"
-                        ? "davam edir"
-                        : status === "shipped"
-                        ? "göndərildi"
-                        : status === "pending"
-                        ? "gözləyir"
-                        : status === "canceled"
-                        ? "ləğv edildi"
-                        : "none"
-                      }
+                        {status === "delivered"
+                          ? "çatdırılmışdır"
+                          : status === "processing"
+                          ? "davam edir"
+                          : status === "shipped"
+                          ? "göndərildi"
+                          : status === "pending"
+                          ? "gözləyir"
+                          : status === "canceled"
+                          ? "ləğv edildi"
+                          : "none"}
                       </option>
                     ))}
                   </select>
@@ -404,10 +431,7 @@ const OrdersTable = () => {
                       {selectedOrder.payment_status === "paid"
                         ? "ödənilmişdir"
                         : "ödənilməmişdir"}
-
-                      {selectedOrder.payment_method === "cash"
-                        ? " (nağd)"
-                        : " (kart)"}  
+                      {selectedOrder.payment_method === "cash" ? " (nağd)" : " (kart)"}
                     </span>
                   </span>
                   {selectedOrder.payment_status === "unpaid" && (
@@ -426,7 +450,6 @@ const OrdersTable = () => {
                 </p>
               </div>
 
-              {/* Ordered Products */}
               <div className="mt-6">
                 <h4 className="text-lg font-semibold text-indigo-300 mb-3">
                   Sifarişin Məhsullar
@@ -451,12 +474,12 @@ const OrdersTable = () => {
                             {product.name || "Loading..."}
                           </p>
                           <p className="text-xs text-gray-400">
-                            Say: {item.quantity} | Vahid Qiymət: ₼ 
-                            { product.price || item.price_at_purchase}
+                            Say: {item.quantity} | Vahid Qiymət: ₼
+                            {product.discount || item.price_at_purchase}
                           </p>
                         </div>
                         <p className="text-sm text-green-400">
-                        ₼ { (product.price || item.price_at_purchase) * item.quantity}
+                          ₼ {(product.discount || item.price_at_purchase) * item.quantity}
                         </p>
                       </div>
                     );
@@ -465,7 +488,6 @@ const OrdersTable = () => {
               </div>
             </div>
 
-            {/* Close Button */}
             <button
               onClick={closeModal}
               className="mt-6 w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
@@ -492,15 +514,13 @@ const OrdersTable = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div>
-
-              <h2 className="text-xl font-semibold text-gray-100 mb-4" style={{textAlign: "center"}}>
+              <h2 className="text-xl font-semibold text-gray-100 mb-4" style={{ textAlign: "center" }}>
                 Silinməni təsdiqləyin
               </h2>
 
               <form onSubmit={handleDeleteOrder}>
-                <div className="grid grid-cols-2 gap-4" style={{justifyContent: "center", display: "flex"}}>
-
-                  <div className="flex gap-4" >
+                <div className="grid grid-cols-2 gap-4" style={{ justifyContent: "center", display: "flex" }}>
+                  <div className="flex gap-4">
                     <button
                       type="button"
                       className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
