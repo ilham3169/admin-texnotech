@@ -20,8 +20,8 @@ const OrdersTable = () => {
       const data = await response.json();
   
       // Basic Auth credentials for Kapital Bank API
-      const username = "TerminalSys/kapital";
-      const password = "kapital123";
+      const username = "TerminalSys/E1250023";
+      const password = "COn*)3zB@Jv[H(dUDor5";
       const authHeader = `Basic ${btoa(`${username}:${password}`)}`;
   
       const updatedOrders = await Promise.all(
@@ -29,7 +29,7 @@ const OrdersTable = () => {
           if (order.payment_method === "card") {
             try {
               const kapitalResponse = await fetch(
-                `https://txpgtst.kapitalbank.az/api/order/${order.id}?tranDetailLevel=1`,
+                `https://e-commerce.kapitalbank.az/api/order/${order.id}?tranDetailLevel=1`,
                 {
                   method: "GET",
                   headers: {
