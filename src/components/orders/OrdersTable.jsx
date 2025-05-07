@@ -493,7 +493,7 @@ const OrdersTable = () => {
                       {selectedOrder.payment_status === "paid"
                         ? "ödənilmişdir"
                         : "ödənilməmişdir"}
-                      {selectedOrder.payment_method === "cash" ? " (nağd)" : " (kart)"}
+                      {selectedOrder.payment_method === "kredit" ? " (kredit)" : " (kart)"}
                     </span>
                   </span>
                   {selectedOrder.payment_status === "unpaid" && (
