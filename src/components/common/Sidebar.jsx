@@ -14,7 +14,7 @@ const SIDEBAR_ITEMS = [
 	// { name: "Users", icon: Users, color: "#EC4899", href: "/users" },
 	// { name: "Sales", icon: DollarSign, color: "#10B981", href: "/sales" },
 	{ name: "Sifarişlər", icon: ShoppingCart, color: "#F59E0B", href: "/orders" },
-	{ name: "Analiz", icon: TrendingUp, color: "#3B82F6", href: "/analytics" },
+	// { name: "Analiz", icon: TrendingUp, color: "#3B82F6", href: "/analytics" },
 	// { name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
 ];
 
