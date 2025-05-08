@@ -496,6 +496,9 @@ const OrdersTable = () => {
                       {selectedOrder.payment_method === "kredit" ? " (kredit)" : " (kart)"}
                     </span>
                   </span>
+
+
+                  
                   {selectedOrder.payment_status === "unpaid" && (
                     <button
                       onClick={() => markAsPaid(selectedOrder.id)}
@@ -505,6 +508,13 @@ const OrdersTable = () => {
                     </button>
                   )}
                 </p>
+
+                <span>
+                    <span className="font-semibold text-indigo-300">Kredit Ayı :</span>
+                    <span>{selectedOrder.month}</span>
+                  </span>
+
+
 
                 <p>
                   <span className="font-semibold text-indigo-300">Tarix:</span>
