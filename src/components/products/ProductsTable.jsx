@@ -332,7 +332,7 @@ const ProductsTable = () => {
       const allSpecs = specsRes.data;
       const existingSpecs = existingSpecsRes.data;
       const specsDict = allSpecs.reduce((acc, spec) => {
-        const existing = existingSpecs.find(es => es.id === spec.id);
+        const existing = existingSpecs.find(es => es.name === spec.name);
         return { ...acc, [spec.id]: existing ? existing.value : "" };
       }, {});
 
