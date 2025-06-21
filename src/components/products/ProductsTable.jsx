@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, Plus, RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import AddProductModal from "./modals/AddProductModal.jsx";
 import AddCategoryModal from './modals/AddCategoryModal.jsx';
@@ -30,6 +31,7 @@ const ProductTableHeader = ({
   handleOpenAddCategoryModal,
   handleOpenAddSpecificationModal,
   handleRefreshProducts,
+  navigateToBanner,
 }) => {
   return (
     <div className="flex justify-between items-center mb-6">
@@ -79,6 +81,12 @@ const ProductTableHeader = ({
         >
           <RefreshCcw size={20} />
         </button>
+        <button
+          onClick={navigateToBanner}
+          className="p-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        >
+          Banner
+        </button>
       </div>
     </div>
   );
@@ -125,6 +133,8 @@ const ProductsTable = () => {
     totalItems: 0,
     isLoading: false,
   });
+
+  const navigate = useNavigate();
 
   const fetchTotalProducts = async () => {
     try {
@@ -562,6 +572,10 @@ const ProductsTable = () => {
     }));
   }, []);
 
+  const navigateToBanner = useCallback(() => {
+    navigate('/banner');
+  }, [navigate]);
+
   return (
     <motion.div
       className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8"
@@ -578,6 +592,7 @@ const ProductsTable = () => {
         handleOpenAddCategoryModal={handleOpenAddCategoryModal}
         handleOpenAddSpecificationModal={handleOpenAddSpecificationModal}
         handleRefreshProducts={handleRefreshProducts}
+        navigateToBanner={navigateToBanner}
       />
 
       <AddProductModal
