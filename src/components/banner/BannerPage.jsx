@@ -15,7 +15,7 @@ const BannersPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  const API_BASE = 'http://127.0.0.1:8000';
+  const API_BASE = 'https://back-texnotech.onrender.com';
 //   http://127.0.0.1:8000/files
 
 
@@ -44,7 +44,7 @@ const BannersPage = () => {
 
     try {
       setUploading(true);
-      const response = await fetch(`http://127.0.0.1:8000/files`, {
+      const response = await fetch(`https://back-texnotech.onrender.com/files`, {
         method: 'POST',
         body: formData,
       });
